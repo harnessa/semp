@@ -17,6 +17,11 @@ import os
 class Utilities(object):
 
     def __init__(self):
+
+        #Constants
+        self.m2mu = 1e6
+        self.mu2m = 1e-6
+
         ### Text Colors ###
         self.colors = ['r','g','b','y','m','c','k']
         self.bad_color = "\x1b[0;30;41m"

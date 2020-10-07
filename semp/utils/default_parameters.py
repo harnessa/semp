@@ -27,7 +27,8 @@ def_params_MEEP = {
     'wave':             0.5,       # Central wavelength.
     'is_diverging':     False,     # Diverging light source
     'source_distance':  27.5,      # Units: [m], Light source distance for diverging beam
-    'source_offset':    0,         # Units: [m], Light source center
+    'source_offset_y':  0,         # Units: [m], Light source center in y
+    'source_offset_z':  0,         # Units: [m], Light source center in z
 
     ### Mask Properties ###
     'sim_geometry':     'gap',     # Geometry of simulation. Options: [gap, edge, corner, vacuum]

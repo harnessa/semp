@@ -42,23 +42,28 @@ class Meep_Sim(object):
         self.src_comp_name = {'s': 'Ez', 'p': 'Hz'}[self.polarization]
         self.src_comp = getattr(mp, self.src_comp_name)
 
-        # #Convert timescales
-        # self.run_time = self.n_periods*self.wave
-        # if self.save_nt is None:
-        #     self.save_dt = self.run_time
-        # else:
-        #     self.save_dt = self.wave/self.save_nt
+        #Source offset
+        self.src_offset = mp.Vector3(y=self.source_offset_y, \
+            z=self.source_offset_z) * self.util.m2mu
+
+        #Convert timescales
+        self.run_time = self.n_periods*self.wave
+        if self.prop.save_nt is None:
+            self.save_dt = self.run_time
+        else:
+            self.save_dt = self.wave/self.prop.save_nt
+
+        #Force scallop height to be greater than twice depth
+        self.scallop_height = max(self.scallop_height, 2*self.scallop_depth)
 
         #Materials
         self.set_materials()
 
         #Load Geometry
         if self.sim_geometry == 'corner':
-            self.geo = semp.simulation.Geometry_3D(self, params)
+            self.geo = semp.simulation.Geometry_3D(self)
         else:
-            self.geo = semp.simulation.Geometry_2D(self, params)
-        print(self.geo.get_symmetries())
-        import pdb;pdb.set_trace()
+            self.geo = semp.simulation.Geometry_2D(self)
 
 ############################################
 ############################################
@@ -120,7 +125,8 @@ class Meep_Sim(object):
         sim = mp.Simulation(split_chunks_evenly=True, force_complex_fields=True,
             ensure_periodicity=False, resolution=self.resolution, Courant=self.courant,
             cell_size=cell_size, boundary_layers=pml_layers, sources=sources,
-            geometry=geometry, symmetries=symmetries, k_point=k_point)
+            geometry=geometry, symmetries=symmetries, k_point=k_point,
+            eps_averaging=False)    #FIXME: remove this
 
         return sim
 
@@ -128,7 +134,7 @@ class Meep_Sim(object):
 ############################################
 
 ############################################
-####	Common Wrappers ####
+####	Common Simulation Components ####
 ############################################
 
     def get_cell_size(self, is_vac):
@@ -151,19 +157,20 @@ class Meep_Sim(object):
         return layers
 
     def get_symmetries(self, is_vac):
-        #Symmetry is broken by offset source
-        if self.source_offset != 0:
+        #Check y symmetry
+        if not self.geo.has_y_symm:
             return []
 
         #No symmetry for vacuum
         if is_vac:
             return []
         else:
-            return self.geo.get_symmetries()
+            phs = {'s':1, 'p':-1}[self.polarization]
+            return [mp.Mirror(mp.Y, phase=phs)]
 
     def get_source(self, is_vac):
         #Center of source
-        src_pt = mp.Vector3(x=self.source_x)
+        src_pt = mp.Vector3(x=self.source_distance)
 
         #Size of source
         src_sze_y = [self.geo.ly, 0.][is_vac]
@@ -181,26 +188,33 @@ class Meep_Sim(object):
     def get_source_function(self):
 
         #Get source dependent
-        sim_src = mp.ContinuousSource(self.fcen, fwidth=self.df, is_integrated=True)
+        sim_src = mp.ContinuousSource(self.fcen, fwidth=self.dfreq, is_integrated=True)
 
         #For amp func
         kk = 2.*np.pi*self.fcen
-        y0 = self.source_offset*self.util.m2mu
-        zz = self.source_distance*self.util.m2mu
+        dist = self.source_distance*self.util.m2mu + self.geo.source_x
 
-        #Amplitude function     #TODO: fix for corner
+        #Amplitude function
         if self.is_diverging:
             def amp_func(pos):
-                rr = np.sqrt((pos.y - y0)**2 + (pos.x + zz)**2)
-                return np.exp(1j*kk*rr)*(zz/rr)
+                rr = np.sqrt((pos.y - self.src_offset.y)**2 + \
+                    (pos.z - self.src_offset.z)**2 + (pos.x + dist)**2)
+                return np.exp(1j*kk*rr)*(dist/rr)
 
         else:
-            if self.source_y0 != 0:
-                amp_func = lambda pos: np.exp(1j*kk*(pos.y - y0))
+            if self.src_offset.norm() != 0:
+                #Get amplitude function
+                amp_func = self.geo.get_src_amp_func(kk)
             else:
                 amp_func = None
 
         return sim_src, amp_func
+
+    def get_geometry(self, is_vac):
+        if is_vac:
+            return []
+        else:
+            return self.geo.get_geometry()
 
 ############################################
 ############################################
