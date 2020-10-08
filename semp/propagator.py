@@ -82,7 +82,7 @@ class Propagator(object):
 
     def run_movie(self):
         #Run sim in vacuum
-        # self.run_single_movie(is_vac=True)
+        self.run_single_movie(is_vac=True)
 
         #Run sim with wafer
         self.run_single_movie(is_vac=False)
@@ -90,13 +90,6 @@ class Propagator(object):
     def run_single_movie(self, is_vac=False):
         #Build simulation
         sim = self.meep_sim.build_sim(is_vac=is_vac)
-
-        import matplotlib.pyplot as plt;plt.ion()
-        sim.init_fields()
-        eps = np.abs(sim.get_epsilon(self.meep_sim.fcen))
-        plt.imshow(eps,vmax=15, interpolation='none')
-
-        import pdb;pdb.set_trace()
 
         #Set output directory + prefix
         sim.use_output_directory(self.save_dir)

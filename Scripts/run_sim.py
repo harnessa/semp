@@ -26,13 +26,13 @@ MEEP_params = {
     'skin_thick':       0.4,
     'gap_width':        5,
 
-    # 'taper_angle':      20,
-    # 'wall_thick':       0.2,
+    'taper_angle':      20,
+    'wall_thick':       0.2,
     # 'scallop_height': 0.8,
     # 'scallop_depth': 0.2,
 
     ### Numerics ###
-    'resolution':       10,
+    'resolution':       20,
     'padx':             2,
     'pady':             2.,
     'padz':             2.,

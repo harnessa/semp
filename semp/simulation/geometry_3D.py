@@ -82,25 +82,85 @@ class Geometry_3D(Geometry_2D):
     def get_geometry(self):
 
         #Build end block
-        end_blk = self.build_end_block()
+        y1 = self.lz/2. - self.blk_sze_z
+        end_blk = self.build_edge(y0=self.lz/2., y1=y1, zdepth=self.ly)
+
+        #Rotate end block to be aligned with y-axis (rotate moves center to z=0)
+        end_blk = self.rotate_edge_z2y(end_blk)
+        #Shift end block to put at end
+        bdz = -(self.lz - self.blk_sze_z)/2.
+        end_blk = self.shift_edge(end_blk, 'z', bdz)
 
         #Build edges
         edge1 = self.build_edge()
         edge2 = self.flip_edge_y(self.build_edge())
 
-        #Shift edges to match end block
-        dz = self.lz/2.
-        edge1 = self.shift_edge_z(edge1, -dz)
-        edge2 = self.shift_edge_z(edge2, -dz)
+        #Shift edges to match end blocks
+        edz = -self.lz/2.
+        edge1 = self.shift_edge(edge1, 'z', edz)
+        edge2 = self.shift_edge(edge2, 'z', edz)
+
+        #Plug up corners
+        cnr1 = self.build_corner_wedge(is_neg=True)
+        cnr2 = self.build_corner_wedge(is_neg=False)
 
         #Add all shapes together (order matters!)
-        geometry = edge1 + edge2 + end_blk
+        geometry = edge1 + edge2 + end_blk + cnr1 + cnr2
 
-        # import pdb;pdb.set_trace()
+        #Shift by 1 resolution element (why?)
+        geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
+        geometry = self.shift_edge(geometry, 'z', -1/self.resolution)
+
+        #TODO: add broken corner
+
         return geometry
 
-    def build_end_block(self):
+    def shift_edge(self, edge, comp, dshf):
+        #Loop through shapes
+        for cur_shp in edge:
 
+            #Is prism
+            if isinstance(cur_shp, mp.geom.Prism):
+                for p in cur_shp.vertices:
+                    setattr(p, comp, getattr(p, comp) + dshf)
+
+            #Shift center for all
+            setattr(cur_shp.center, comp, getattr(cur_shp.center, comp) + dshf)
+
+        return edge
+
+    def rotate_edge_z2y(self, edge):
+        #Get y-centers of each component so that we can realign on wafer block
+        ycens = [ee.center.y for ee in edge]
+
+        #Loop through shapes
+        for i in range(len(edge)):
+            #Current shape
+            cur_shp = edge[i]
+
+            #Is Block
+            if isinstance(cur_shp, mp.geom.Block):
+                cur_shp.e1 = mp.Vector3(1,0,0)
+                cur_shp.e2 = mp.Vector3(0,0,1)
+                cur_shp.e3 = mp.Vector3(0,1,0)
+
+            #Is Prism
+            elif isinstance(cur_shp, mp.geom.Prism):
+                for j in range(len(cur_shp.vertices)):
+                    cur_shp.vertices[j] = \
+                        cur_shp.vertices[j].rotate(mp.Vector3(1,0,0), np.pi/2)
+                cur_shp.axis = mp.Vector3(0,1,0)
+
+            #Is Cylinder
+            else:
+                cur_shp.axis = mp.Vector3(0,1,0)
+
+            #Move center to x=original; y=0; z=around 0, but keeping relative to skin [1]
+            cur_shp.center = mp.Vector3(cur_shp.center.x, 0, ycens[i] - ycens[1])
+
+        return edge
+
+    def build_corner_wedge(self, is_neg=True):
         #Container
         geometry = []
 
@@ -108,48 +168,35 @@ class Geometry_3D(Geometry_2D):
         waf_mat = self.parent.wafer_mat_obj
         skn_mat = self.parent.skin_mat_obj
 
+        #Wedge angles + size
+        if is_neg:
+            wed_srt = mp.Vector3(z=1)
+            sgn = -1
+        else:
+            wed_srt = mp.Vector3(y=-1)
+            sgn = 1
+        wed_ang = 3*np.pi/2.
+        wed_rad = max((self.ly - self.gap_width)/2., self.blk_sze_z)
+
+        #Center
+        cz0 = -self.lz/2. + self.blk_sze_z
+        cy0 = sgn*self.gap_width/2.
+        dtaper = self.wafer_thick * np.tan(np.radians(self.taper_angle)) + \
+            self.wall_thick + self.scallop_depth*2
+        waf_cen = mp.Vector3(0, cy0 + sgn*dtaper, cz0 - dtaper)
+
         #Wafer
-        ex = self.wafer_thick/2.
-        ey = -self.ly/2.
-        ez0 = -self.lz/2
-        ez1 = ez0 + self.blk_sze_z
-        wdz = self.wafer_thick * np.tan(np.radians(self.taper_angle))
-        #lower (in image) left, upper left, upper right, lower right
-        waf_verts = [mp.Vector3(x= ex, y=ey, z=ez0), mp.Vector3(x=-ex, y=ey, z=ez0), \
-                     mp.Vector3(x=-ex, y=ey, z=ez1), mp.Vector3(x= ex, y=ey, z=ez1 - wdz)]
-        wafer = mp.Prism(waf_verts, self.ly, axis=mp.Vector3(0,1,0), material=waf_mat)
+        wafer = mp.Wedge(material=waf_mat, height=self.wafer_thick, center=waf_cen, \
+            radius=wed_rad, wedge_angle=wed_ang, wedge_start=wed_srt, axis=mp.Vector3(1))
         geometry += [wafer]
 
         #Skin
-        if self.skin_thick > 0:
-            skcx = -(self.wafer_thick + self.skin_thick)/2.
-            skcz = (-self.lz + self.blk_sze_z)/2.
-            skn_sze = mp.Vector3(self.skin_thick, self.ly, self.blk_sze_z)
-            skn_cen = mp.Vector3(x=skcx, z=skcz)
-            skin = mp.Block(material=skn_mat, size=skn_sze, center=skn_cen)
-            geometry += [skin]
+        skn_cen = mp.Vector3(-(self.wafer_thick + self.skin_thick)/2., waf_cen.y, waf_cen.z)
+        skin = mp.Wedge(material=skn_mat, height=self.skin_thick, center=skn_cen, \
+            radius=wed_rad, wedge_angle=wed_ang, wedge_start=wed_srt, axis=mp.Vector3(1))
+        geometry += [skin]
 
         return geometry
-
-    def shift_edge_z(self, edge, dz):
-        #Loop through shapes
-        for cur_shp in edge:
-
-            #Is prism
-            if isinstance(cur_shp, mp.geom.Prism):
-                cur_shp.center.z += dz
-                for p in cur_shp.vertices:
-                    p.z += dz
-
-            #Is Block
-            elif isinstance(cur_shp, mp.geom.Block):
-                cur_shp.center.z += dz
-
-            #Is Cylinder
-            elif isinstance(cur_shp, mp.geom.Cylinder):
-                cur_shp.center.z += dz
-
-        return edge
 
 ############################################
 ############################################

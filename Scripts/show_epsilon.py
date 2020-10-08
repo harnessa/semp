@@ -31,8 +31,8 @@ MEEP_params = {
 
     'taper_angle':      20,
     # 'wall_thick':       0.2,
-    # 'scallop_height': 0.8,
-    # 'scallop_depth': 0.2,
+    # 'scallop_height':   0.8,
+    # 'scallop_depth':    0.2,
 
     'sim_geometry':     'corner',
     'corner_length':    2,
@@ -64,23 +64,34 @@ ms = prop.meep_sim
 
 
 fig, axes = plt.subplots(3,1,figsize=(11,8.5),tight_layout=True)
-ff = [0.5,0.5,0.55]
-dd = [int(ff[j]*eps.shape[j]) for j in range(3)]
+#fraction of plot lines
+ff = [0.5,0.5,0.5]
+
+#shapes
+dd = [ff[j]*eps.shape[j] for j in range(3)]
+shps = [eps.shape[j] for j in range(3)]
+
+#ordinate and abcissa indices
+abcs = [2,2,1]
+ords = [1,0,0]
+
 for j in range(3):
-    axes[j].imshow(eps.take(dd[j],axis=j), vmax=15, interpolation='none')
-axes[0].axhline(dd[1], color='r')
-axes[0].axvline(dd[2], color='r')
-axes[0].set_xlabel('z')
-axes[0].set_ylabel('y')
-axes[1].set_xlabel('z')
-axes[1].set_ylabel('x')
-axes[2].set_xlabel('y')
-axes[2].set_ylabel('x')
-axes[0].axhline(eps.shape[1]/2, color='k', linestyle=':')
-axes[0].axvline(eps.shape[2]/2, color='k', linestyle=':')
-axes[1].axhline(eps.shape[0]/2, color='k', linestyle=':')
-axes[1].axvline(eps.shape[2]/2, color='k', linestyle=':')
-axes[2].axhline(eps.shape[0]/2, color='k', linestyle=':')
-axes[2].axvline(eps.shape[1]/2, color='k', linestyle=':')
+    axes[j].imshow(eps.take(int(dd[j]),axis=j), vmax=15, interpolation='none', \
+        extent=[0,shps[abcs[j]], shps[ords[j]],0])
+    axes[j].axvline(shps[abcs[j]]/2, color='k', linestyle=':')
+    axes[j].axhline(shps[ords[j]]/2, color='k', linestyle=':')
+    axes[j].set_xlabel(['x','y','z'][abcs[j]])
+    axes[j].set_ylabel(['x','y','z'][ords[j]])
+    axes[j].axvline(dd[abcs[j]], color='g')
+    axes[j].axhline(dd[ords[j]], color='g')
+
+#Gap width
+res, wid = MEEP_params['resolution'], MEEP_params['gap_width']
+axes[2].axvline(eps.shape[1]/2-wid*res/2, color='r')
+axes[2].axvline(eps.shape[1]/2+wid*res/2, color='r')
+
+#Corner length
+axes[0].axvline((ms.pmlz+ms.padz)*res, color='r')
+axes[1].axvline((ms.pmlz+ms.padz)*res, color='r')
 
 import pdb;pdb.set_trace()

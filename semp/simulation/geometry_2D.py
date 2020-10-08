@@ -87,11 +87,9 @@ class Geometry_2D(object):
             #Build edge and flip coordinates
             geometry += self.flip_edge_y(self.build_edge())
 
-        # import pdb;pdb.set_trace()
         return geometry
 
-    def build_edge(self, zdepth=mp.inf):
-
+    def build_edge(self, y0=None, y1=None, zdepth=mp.inf):
         #Container
         geometry = []
 
@@ -99,31 +97,34 @@ class Geometry_2D(object):
         waf_mat = self.parent.wafer_mat_obj
         skn_mat = self.parent.skin_mat_obj
 
+        #Set start point and width
+        if y0 is None:
+            y0 = self.ly/2.
+        if y1 is None:
+            y1 = self.gap_width/2.
+
         #Wafer
         ex = self.wafer_thick/2.
-        ey0 = -self.ly/2
-        ey1 = -self.gap_width/2.
-        wdy = self.wafer_thick * np.tan(np.radians(self.taper_angle))
+        dy = self.wafer_thick * np.tan(np.radians(self.taper_angle))
         #lower (in image) left, upper left, upper right, lower right
-        waf_verts = [mp.Vector3( ex, ey0), mp.Vector3(-ex, ey0), \
-                     mp.Vector3(-ex, ey1), mp.Vector3( ex, ey1 - wdy)]
+        waf_verts = [mp.Vector3( ex, -y0), mp.Vector3(-ex, -y0), \
+                     mp.Vector3(-ex, -y1), mp.Vector3( ex, -y1 - dy)]
         wafer = mp.Prism(waf_verts, zdepth, material=waf_mat)
         geometry += [wafer]
 
         #Skin
-        if self.skin_thick > 0:
-            sksy = (self.ly - self.gap_width)/2.
-            skcx = -(self.wafer_thick + self.skin_thick)/2.
-            skcy = -self.ly/2. + sksy/2.
-            skn_sze = mp.Vector3(self.skin_thick, sksy, zdepth)
-            skn_cen = mp.Vector3(skcx, skcy)
-            skin = mp.Block(material=skn_mat, size=skn_sze, center=skn_cen)
-            geometry += [skin]
+        sksy = y0 - y1
+        skcx = -(self.wafer_thick + self.skin_thick)/2.
+        skcy = -y0 + sksy/2.
+        skn_sze = mp.Vector3(self.skin_thick, sksy, zdepth)
+        skn_cen = mp.Vector3(skcx, skcy)
+        skin = mp.Block(material=skn_mat, size=skn_sze, center=skn_cen)
+        geometry += [skin]
 
         #Sidewalls
         if self.wall_thick > 0:
-            v1 = mp.Vector3(-ex, ey1)
-            v0 = mp.Vector3( ex, ey1 - ey2)
+            v1 = mp.Vector3(-ex, -y1)
+            v0 = mp.Vector3( ex, -y1 - dy)
             dv = mp.Vector3(y=self.wall_thick)
             wal_verts = [v0, v1, v1 - dv, v0 - dv]
             geometry += [mp.Prism(wal_verts, zdepth, material=skn_mat)]
@@ -136,17 +137,17 @@ class Geometry_2D(object):
             #Number of scallops
             n_scls = int(np.round(self.wafer_thick / (2*Rs))) + 1
             #Starting vertical center point
-            x0 = -self.wafer_thick/2. + Rs
+            xs0 = -self.wafer_thick/2. + Rs
             for i in range(n_scls):
                 #Get new horizontal center point (accounting for taper angle)
-                y0 = -self.gap_width/2. - (x0 + self.wafer_thick/2) * \
+                ys0 = -y1 - (xs0 + self.wafer_thick/2) * \
                     np.tan(np.radians(self.taper_angle))
                 #Add cylinders
-                scl_cen = mp.Vector3(x=x0, y=y0 - ys)
+                scl_cen = mp.Vector3(x=xs0, y=ys0 - ys)
                 geometry += [mp.Cylinder(material=mp.air, radius=Rs, \
                     height=zdepth, center=scl_cen)]
                 #Step down to next cylinder's position
-                x0 += 2*Rs
+                xs0 += 2*Rs
 
         return geometry
 
