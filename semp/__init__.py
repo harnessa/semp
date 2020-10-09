@@ -43,7 +43,9 @@ if pkg_home_dir is None:
     import sys
     sys.exit()
 
-results_dir = r"%s/Research/Optics_Modeling/Semp_Results"%os.getenv("HOME")
+results_dir = "%s/Research/Optics_Modeling/Semp_Results"%os.getenv("HOME")
+ext_data_dir = f"{pkg_home_dir}/External_Data"
+int_data_dir = f"{pkg_home_dir}/Internal_Data"
 
 #####################
 #####   Modules #####
@@ -52,4 +54,4 @@ results_dir = r"%s/Research/Optics_Modeling/Semp_Results"%os.getenv("HOME")
 import semp.utils
 from .propagator import Propagator
 import semp.simulation
-# import semp.analysis
+import semp.analysis

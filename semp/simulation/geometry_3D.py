@@ -105,9 +105,6 @@ class Geometry_3D(Geometry_2D):
 
         #Add all shapes together (order matters!)
         geometry = edge1 + edge2 + eblk + cnr1 + cnr2
-        # geometry = edge1 + edge2 + eblk
-        # geometry = cnr1 +cnr2
-        # geometry = eblk
 
         #Shift by 1 resolution element (why?)
         geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
@@ -189,7 +186,6 @@ class Geometry_3D(Geometry_2D):
         cz0 += (eblk.vertices[-1].z + eblk.vertices[-2].z)/2 - eblk.vertices[-2].z \
             - eblk.center.z
         waf_cen = mp.Vector3(0, cy0, cz0)
-        # import pdb;pdb.set_trace()
 
         #Wafer
         wafer = mp.Wedge(material=waf_mat, height=self.wafer_thick, center=waf_cen, \

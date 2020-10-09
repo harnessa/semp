@@ -26,7 +26,7 @@ MEEP_params = {
     'skin_thick':       0.4,
     'gap_width':        5,
 
-    'taper_angle':      20,
+    # 'taper_angle':      20,
     # 'wall_thick':       0.2,
     # 'scallop_height': 0.8,
     # 'scallop_depth': 0.2,
@@ -37,9 +37,11 @@ MEEP_params = {
     'pady':             2.,
     'padz':             2.,
     'n_periods':        50,
+    # 'use_absorber':     True,
 }
 
 PROP_params = {
+    'save_nt':          3,
     'do_save':          True,
     'session_name':     'test',
     'save_ext':         '',
@@ -48,3 +50,8 @@ PROP_params = {
 
 prop = semp.Propagator(MEEP_params, PROP_params)
 prop.run_sim()
+
+# import matplotlib.pyplot as plt;plt.ion()
+# eps = np.abs(prop.get_epsilon())
+#
+# import pdb;pdb.set_trace()

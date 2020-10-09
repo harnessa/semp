@@ -87,13 +87,16 @@ class Propagator(object):
 ############################################
 
     def run_movie(self):
-        #Run sim in vacuum
-        self.run_single_movie(is_vac=True)
+        #Load movie maker
+        self.movie_maker = semp.analysis.Movie_Maker(self)
 
         #Run sim with wafer
-        self.run_single_movie(is_vac=False)
+        self.run_single_movie()
 
-    def run_single_movie(self, is_vac=False):
+    def run_single_movie(self):
+        #Is vacuum?
+        is_vac = self.meep_sim.sim_geometry == 'vacuum'
+
         #Build simulation
         sim = self.meep_sim.build_sim(is_vac=is_vac)
 
@@ -105,19 +108,32 @@ class Propagator(object):
         vac_ext = ['','vac_'][is_vac]
         filename = f'{vac_ext}movie_{self.meep_sim.src_comp_name}{self.logger.ext}'
 
-        #Output function to save data
+        #Function to output epsilon
+        eps_func = mp.at_beginning(mp.output_epsilon)
+
+        #Function to save field (appended) to h5 file
         if self.meep_sim.polarization == 's':
             fld_func = mp.output_efield_z
         else:
             fld_func = mp.output_hfield_z
+        h5_func = mp.to_appended(filename, mp.at_every(self.meep_sim.save_dt, fld_func))
 
-        out_funcs = [mp.to_appended(filename, mp.at_every(self.meep_sim.save_dt, fld_func))]
+        #Function to save png files
+        png_opts = "-Zc dkbluered -a yarg -C $EPS"
+        png_func = mp.at_every(self.meep_sim.save_dt, \
+            mp.output_png(self.meep_sim.src_comp, png_opts, rm_h5=True))
+
+        #Output function to save data
+        out_funcs = [eps_func, h5_func, png_func]
 
         #Run sim
         sim.run(*out_funcs, until=self.meep_sim.run_time)
 
         #Reset sim
         sim.reset_meep()
+
+        #Create movie
+        self.movie_maker.make_movie(filename)
 
 ############################################
 ############################################
