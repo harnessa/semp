@@ -31,12 +31,12 @@ class Logger(object):
 ############################################
 
     def initialize(self):
-        pass
+        self.save_dir = f"{self.prop.save_dir_base}/{self.prop.session_name}"
 
     def start_up(self):
         #Create save directory
         if self.writeable:
-            self.util.create_directory(self.prop.save_dir)
+            self.util.create_directory(self.save_dir)
         #Start
         self.start_time = time.perf_counter()
         self.open_log_file()
@@ -48,7 +48,7 @@ class Logger(object):
         #Finish
         if not self.log_is_open:
             return
-        self.end_time = time.perf_counter()()
+        self.end_time = time.perf_counter()
         self.print_finishing_message()
         self.close_log_file()
         self.log_is_open = False
@@ -61,12 +61,15 @@ class Logger(object):
 ############################################
 
     @property
-    def save_dir(self):
-        return f"{self.prop.save_dir_base}/{self.prop.session_name}"
-
-    @property
     def writeable(self):
         return self.prop.do_save and semp.zero_rank and not self.prop.is_analysis
+
+    @property
+    def ext(self):
+        ext = self.prop.save_ext
+        if ext != '':
+            ext = '__' + ext
+        return ext
 
 ############################################
 ############################################
@@ -77,10 +80,8 @@ class Logger(object):
 
     def filename(self,base_name,file_type,ext=None):
         if ext is None:
-            ext = self.prop.save_ext
-        if ext != '':
-            ext = '__' + ext
-        return f"{self.prop.save_dir}/{base_name}{ext}.{file_type}"
+            ext = self.ext
+        return f"{self.save_dir}/{base_name}{ext}.{file_type}"
 
     def open_log_file(self):
         #Return immediately if not writeable
@@ -162,10 +163,11 @@ class Logger(object):
         #Return immediately if not saving or if not zero-rank processor
         if not self.writeable:
             return
+
         #Save parameters
-        pickle.dump(open(self.filename('parameters', 'pck'), 'wb'), self.prop.params)
+        pickle.dump(self.prop.params,      open(self.filename('parameters', 'pck'), 'wb'))
         #Save default parameters
-        pickle.dump(open(self.filename('def_params', 'pck'), 'wb'), semp.utils.def_params)
+        pickle.dump(semp.utils.def_params, open(self.filename('def_params', 'pck'), 'wb'))
 
 ############################################
 ############################################

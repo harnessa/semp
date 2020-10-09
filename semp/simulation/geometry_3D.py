@@ -80,16 +80,15 @@ class Geometry_3D(Geometry_2D):
 ############################################
 
     def get_geometry(self):
-
         #Build end block
         y1 = self.lz/2. - self.blk_sze_z
-        end_blk = self.build_edge(y0=self.lz/2., y1=y1, zdepth=self.ly)
+        eblk = self.build_edge(y0=self.lz/2., y1=y1, zdepth=self.ly)
 
         #Rotate end block to be aligned with y-axis (rotate moves center to z=0)
-        end_blk = self.rotate_edge_z2y(end_blk)
+        eblk = self.rotate_edge_z2y(eblk)
         #Shift end block to put at end
         bdz = -(self.lz - self.blk_sze_z)/2.
-        end_blk = self.shift_edge(end_blk, 'z', bdz)
+        eblk = self.shift_edge(eblk, 'z', bdz)
 
         #Build edges
         edge1 = self.build_edge()
@@ -101,17 +100,21 @@ class Geometry_3D(Geometry_2D):
         edge2 = self.shift_edge(edge2, 'z', edz)
 
         #Plug up corners
-        cnr1 = self.build_corner_wedge(is_neg=True)
-        cnr2 = self.build_corner_wedge(is_neg=False)
+        cnr1 = self.build_corner_wedge(eblk[0], edge1[0], is_neg=True)
+        cnr2 = self.build_corner_wedge(eblk[0], edge2[0], is_neg=False)
 
         #Add all shapes together (order matters!)
-        geometry = edge1 + edge2 + end_blk + cnr1 + cnr2
+        geometry = edge1 + edge2 + eblk + cnr1 + cnr2
+        # geometry = edge1 + edge2 + eblk
+        # geometry = cnr1 +cnr2
+        # geometry = eblk
 
         #Shift by 1 resolution element (why?)
         geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
         geometry = self.shift_edge(geometry, 'z', -1/self.resolution)
 
         #TODO: add broken corner
+        # import  pdb;pdb.set_trace()
 
         return geometry
 
@@ -160,7 +163,7 @@ class Geometry_3D(Geometry_2D):
 
         return edge
 
-    def build_corner_wedge(self, is_neg=True):
+    def build_corner_wedge(self, eblk, edge, is_neg=True):
         #Container
         geometry = []
 
@@ -178,12 +181,15 @@ class Geometry_3D(Geometry_2D):
         wed_ang = 3*np.pi/2.
         wed_rad = max((self.ly - self.gap_width)/2., self.blk_sze_z)
 
-        #Center
-        cz0 = -self.lz/2. + self.blk_sze_z
-        cy0 = sgn*self.gap_width/2.
-        dtaper = self.wafer_thick * np.tan(np.radians(self.taper_angle)) + \
-            self.wall_thick + self.scallop_depth*2
-        waf_cen = mp.Vector3(0, cy0 + sgn*dtaper, cz0 - dtaper)
+        #Get center of cylinder from wafer positions (include scallops)
+        cy0 = edge.vertices[-1].y + sgn*(self.scallop_depth*2 + self.wall_thick)
+        cz0 = eblk.vertices[-1].z +  -1*(self.scallop_depth*2 + self.wall_thick)
+        #Account for shift in center
+        cy0 += (edge.vertices[-1].y + edge.vertices[-2].y)/2 - edge.vertices[-2].y
+        cz0 += (eblk.vertices[-1].z + eblk.vertices[-2].z)/2 - eblk.vertices[-2].z \
+            - eblk.center.z
+        waf_cen = mp.Vector3(0, cy0, cz0)
+        # import pdb;pdb.set_trace()
 
         #Wafer
         wafer = mp.Wedge(material=waf_mat, height=self.wafer_thick, center=waf_cen, \

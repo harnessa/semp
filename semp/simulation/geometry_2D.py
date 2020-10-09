@@ -135,7 +135,7 @@ class Geometry_2D(object):
             Rs = self.scallop_height/2.
             ys = Rs - self.scallop_depth
             #Number of scallops
-            n_scls = int(np.round(self.wafer_thick / (2*Rs))) + 1
+            n_scls = int(self.wafer_thick / (2*Rs)) + 1
             #Starting vertical center point
             xs0 = -self.wafer_thick/2. + Rs
             for i in range(n_scls):

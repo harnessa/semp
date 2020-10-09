@@ -12,7 +12,7 @@ License: Refer to $pkg_home_dir/LICENSE
 
 import semp
 import numpy as np
-import atexit
+import meep as mp
 
 class Propagator(object):
 
@@ -52,11 +52,17 @@ class Propagator(object):
 ############################################
 
     def run_sim(self):
+        #Run Startups
+        self.logger.start_up()
+
         #Run Movie or Propagation simulation
         if self.is_movie:
             self.run_movie()
         else:
             self.run_propagation()
+
+        #Run Closeups
+        self.logger.close_up()
 
     def get_epsilon(self):
         sim = self.meep_sim.build_sim()
@@ -92,15 +98,15 @@ class Propagator(object):
         sim = self.meep_sim.build_sim(is_vac=is_vac)
 
         #Set output directory + prefix
-        sim.use_output_directory(self.save_dir)
+        sim.use_output_directory(self.logger.save_dir)
         sim.filename_prefix = ''
 
         #Get filename
-        filename = "%smovie_%s%s"%(['','vac_'][is_vac], \
-            self.fld_comp_name, self.util.get_ext(self.save_ext))
+        vac_ext = ['','vac_'][is_vac]
+        filename = f'{vac_ext}movie_{self.meep_sim.src_comp_name}{self.logger.ext}'
 
         #Output function to save data
-        if self.polarization == 's':
+        if self.meep_sim.polarization == 's':
             fld_func = mp.output_efield_z
         else:
             fld_func = mp.output_hfield_z
@@ -112,8 +118,6 @@ class Propagator(object):
 
         #Reset sim
         sim.reset_meep()
-
-        import pdb;pdb.set_trace()
 
 ############################################
 ############################################
