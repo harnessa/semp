@@ -21,26 +21,26 @@ MEEP_params = {
 
     ### Mask Properties ###
     # 'sim_geometry':     'edge',
-    'wafer_material':   'cSi',
-    'skin_material':    'Al',
-    # 'wafer_material':   'metal',
-    # 'skin_material':    'metal',
+    # 'wafer_material':   'cSi',
+    # 'skin_material':    'Al',
+    'wafer_material':   'metal',
+    'skin_material':    'metal',
     'wafer_thick':      2.,
     'skin_thick':       0.4,
     'gap_width':        3,
 
     'taper_angle':      20,
-    'wall_thick':       0.4,
-    'scallop_height':   0.8,
-    'scallop_depth':    0.2,
+    # 'wall_thick':       0.4,
+    # 'scallop_height':   0.8,
+    # 'scallop_depth':    0.2,
 
     'sim_geometry':     'corner',
     'corner_length':    2,
-    # 'corner_dy':        0.5,
-    # 'corner_dz':        1,
+    'corner_dy':        1.5,
+    'corner_dz':        1.,
 
     ### Numerics ###
-    'resolution':       15,
+    'resolution':       10,
     'padx':             1/2,
     'pady':             1/2,
     'padz':             1/2,
@@ -58,7 +58,7 @@ prop = semp.Propagator(MEEP_params, PROP_params)
 eps = np.abs(prop.get_epsilon())
 ms = prop.meep_sim
 
-if [False,True][0]:
+if [False,True][1]:
     from mayavi import mlab
     dd = mlab.contour3d(eps, contours=75)
     import pdb;pdb.set_trace()

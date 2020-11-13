@@ -89,15 +89,13 @@ class Geometry_2D(object):
 
         return geometry
 
-    def build_edge(self, y0=None, y1=None, zdepth=mp.inf, waf_mat=None, skn_mat=None):
+    def build_edge(self, y0=None, y1=None, zdepth=mp.inf):
         #Container
         geometry = []
 
         #Materials
-        if waf_mat is None:
-            waf_mat = self.parent.wafer_mat_obj
-        if skn_mat is None:
-            skn_mat = self.parent.skin_mat_obj
+        waf_mat = self.parent.wafer_mat_obj
+        skn_mat = self.parent.skin_mat_obj
 
         #Set start point and width
         if y0 is None:
@@ -111,17 +109,21 @@ class Geometry_2D(object):
         #lower (in image) left, upper left, upper right, lower right
         waf_verts = [mp.Vector3( ex, -y0), mp.Vector3(-ex, -y0), \
                      mp.Vector3(-ex, -y1), mp.Vector3( ex, -y1 - dy)]
-        wafer = mp.Prism(waf_verts, zdepth, material=waf_mat)
+        wafer = mp.Prism(waf_verts, float(zdepth), material=waf_mat)
         geometry += [wafer]
 
         #Skin
         sksy = y0 - y1
         skcx = -(self.wafer_thick + self.skin_thick)/2.
         skcy = -y0 + sksy/2.
+        skcz = 0
+        if not np.isclose(zdepth, mp.inf):
+            skcz = zdepth/2
         skn_sze = mp.Vector3(self.skin_thick, sksy, zdepth)
-        skn_cen = mp.Vector3(skcx, skcy)
+        skn_cen = mp.Vector3(skcx, skcy, skcz)
         skin = mp.Block(material=skn_mat, size=skn_sze, center=skn_cen)
         geometry += [skin]
+
 
         #Sidewalls
         if self.wall_thick > 0:
@@ -133,7 +135,7 @@ class Geometry_2D(object):
 
         #Scallops
         if self.scallop_depth > 0:
-            #Cylinder height start (gap width if end block, infinite for edges)
+            # Cylinder height start (gap width if end block, infinite for edges)
             cyl_hgt_0 = zdepth - 2*(self.pmly + self.pady)
             #Radius (from height) + Horizontal offset (from depth)
             Rs = self.scallop_height/2.
@@ -146,7 +148,7 @@ class Geometry_2D(object):
                 #Get new horizontal center point (accounting for taper angle)
                 ys0 = -y1 - (xs0 + self.wafer_thick/2) * \
                     np.tan(np.radians(self.taper_angle))
-                #Get new cylinder height (accounting for taper angle)
+                #Get cylinder height (accounting for taper angle)
                 cyl_hgt = cyl_hgt_0 + 2*(xs0 + self.wafer_thick/2) * \
                     np.tan(np.radians(self.taper_angle))
                 #Add cylinders
