@@ -125,8 +125,8 @@ class Meep_Sim(object):
         sim = mp.Simulation(split_chunks_evenly=True, force_complex_fields=True,
             ensure_periodicity=False, resolution=self.resolution, Courant=self.courant,
             cell_size=cell_size, boundary_layers=pml_layers, sources=sources,
-            geometry=geometry, symmetries=symmetries, k_point=k_point)#,
-            # eps_averaging=False)    #FIXME: remove this
+            geometry=geometry, symmetries=symmetries, k_point=k_point,
+            eps_averaging=False)    #FIXME: remove this
 
         return sim
 

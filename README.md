@@ -1,7 +1,6 @@
 # semp
 ------------
-The Starshade ElectroMagnetic Propagation, or _semp_, is a package that simulates the propagation of light through narrow regions of a starshade. _semp_ relies on the _meep_ software, which uses a Finite Difference Time Domain integration scheme
-to solve Maxwell's equations.
+The Starshade ElectroMagnetic Propagation, or _semp_, is a package that simulates the propagation of light through narrow regions of a starshade. _semp_ relies on the _meep_ software, which uses a Finite Difference Time Domain integration scheme to solve Maxwell's equations.
 
 Getting started
 ---------------------

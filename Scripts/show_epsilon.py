@@ -22,15 +22,15 @@ MEEP_params = {
     ### Mask Properties ###
     # 'sim_geometry':     'edge',
     'wafer_material':   'cSi',
-    'skin_material':    'Au',
+    'skin_material':    'Al',
     # 'wafer_material':   'metal',
     # 'skin_material':    'metal',
     'wafer_thick':      2.,
-    # 'skin_thick':       0.4,
-    'gap_width':        5,
+    'skin_thick':       0.4,
+    'gap_width':        3,
 
     'taper_angle':      20,
-    # 'wall_thick':       0.2,
+    'wall_thick':       0.4,
     'scallop_height':   0.8,
     'scallop_depth':    0.2,
 
@@ -40,13 +40,13 @@ MEEP_params = {
     # 'corner_dz':        1,
 
     ### Numerics ###
-    'resolution':       10,
+    'resolution':       15,
     'padx':             1/2,
     'pady':             1/2,
     'padz':             1/2,
-    'padx':             1,
-    'pady':             1.,
-    'padz':             1.,
+    'padx':             1/2,
+    'pady':             1/2,
+    'padz':             1/2,
 }
 
 PROP_params = {
@@ -58,47 +58,50 @@ prop = semp.Propagator(MEEP_params, PROP_params)
 eps = np.abs(prop.get_epsilon())
 ms = prop.meep_sim
 
-from mayavi import mlab
-dd = mlab.contour3d(eps, colormap='YlGnBu')
-import pdb;pdb.set_trace()
+if [False,True][0]:
+    from mayavi import mlab
+    dd = mlab.contour3d(eps, contours=75)
+    import pdb;pdb.set_trace()
 
-#fraction of plot lines
-ff = [0.5,0.5,0.5]
+else:
 
-def plot(eps, ff):
-    fig, axes = plt.subplots(3,1,figsize=(11,8.5),tight_layout=True)
-    #shapes
-    dd = [ff[j]*eps.shape[j] for j in range(3)]
-    shps = [eps.shape[j] for j in range(3)]
+    #fraction of plot lines
+    ff = [0.5,0.5,0.5]
 
-    #ordinate and abcissa indices
-    abcs = [2,2,1]
-    ords = [1,0,0]
+    def plot(eps, ff):
+        fig, axes = plt.subplots(3,1,figsize=(11,8.5),tight_layout=True)
+        #shapes
+        dd = [ff[j]*eps.shape[j] for j in range(3)]
+        shps = [eps.shape[j] for j in range(3)]
 
-    for j in range(3):
-        axes[j].imshow(eps.take(int(dd[j]),axis=j), vmax=15, interpolation='none', \
-            extent=[0,shps[abcs[j]], shps[ords[j]],0])
-        axes[j].axvline(shps[abcs[j]]/2, color='k', linestyle=':')
-        axes[j].axhline(shps[ords[j]]/2, color='k', linestyle=':')
-        axes[j].set_xlabel(['x','y','z'][abcs[j]])
-        axes[j].set_ylabel(['x','y','z'][ords[j]])
-        axes[j].axvline(dd[abcs[j]], color='g')
-        axes[j].axhline(dd[ords[j]], color='g')
+        #ordinate and abcissa indices
+        abcs = [2,2,1]
+        ords = [1,0,0]
 
-    #Gap width
-    res, wid = MEEP_params['resolution'], MEEP_params['gap_width']
-    axes[2].axvline(eps.shape[1]/2-wid*res/2, color='r')
-    axes[2].axvline(eps.shape[1]/2+wid*res/2, color='r')
+        for j in range(3):
+            axes[j].imshow(eps.take(int(dd[j]),axis=j), vmax=105, interpolation='none', \
+                extent=[0,shps[abcs[j]], shps[ords[j]],0])
+            axes[j].axvline(shps[abcs[j]]/2, color='k', linestyle=':')
+            axes[j].axhline(shps[ords[j]]/2, color='k', linestyle=':')
+            axes[j].set_xlabel(['x','y','z'][abcs[j]])
+            axes[j].set_ylabel(['x','y','z'][ords[j]])
+            axes[j].axvline(dd[abcs[j]], color='g')
+            axes[j].axhline(dd[ords[j]], color='g')
 
-    #Corner length
-    axes[0].axvline((ms.pmlz+ms.padz)*res, color='r')
-    axes[1].axvline((ms.pmlz+ms.padz)*res, color='r')
+        #Gap width
+        res, wid = MEEP_params['resolution'], MEEP_params['gap_width']
+        axes[2].axvline(eps.shape[1]/2-wid*res/2, color='r')
+        axes[2].axvline(eps.shape[1]/2+wid*res/2, color='r')
 
-    return axes
+        #Corner length
+        axes[0].axvline((ms.pmlz+ms.padz)*res, color='r')
+        axes[1].axvline((ms.pmlz+ms.padz)*res, color='r')
 
-axes=plot(eps, ff)
+        return axes
 
-plt.figure()
-plt.imshow(eps[50], interpolation='none', extent=[0,eps.shape[2], eps.shape[1],0])
+    axes=plot(eps, ff)
 
-import pdb;pdb.set_trace()
+    # plt.figure()
+    # plt.imshow(eps[50], interpolation='none', extent=[0,eps.shape[2], eps.shape[1],0])
+
+    import pdb;pdb.set_trace()

@@ -99,12 +99,8 @@ class Geometry_3D(Geometry_2D):
         edge1 = self.shift_edge(edge1, 'z', edz)
         edge2 = self.shift_edge(edge2, 'z', edz)
 
-        #Plug up corners
-        cnr1 = self.build_corner_wedge(eblk[0], edge1[0], is_neg=True)
-        cnr2 = self.build_corner_wedge(eblk[0], edge2[0], is_neg=False)
-
         #Add all shapes together (order matters!)
-        geometry = edge1 + edge2 + eblk + cnr1 + cnr2
+        geometry = edge1 + edge2 + eblk
 
         #Shift by 1 resolution element (why?)
         geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
@@ -159,46 +155,6 @@ class Geometry_3D(Geometry_2D):
             cur_shp.center = mp.Vector3(cur_shp.center.x, 0, ycens[i] - ycens[1])
 
         return edge
-
-    def build_corner_wedge(self, eblk, edge, is_neg=True):
-        #Container
-        geometry = []
-
-        #Materials
-        waf_mat = self.parent.wafer_mat_obj
-        skn_mat = self.parent.skin_mat_obj
-
-        #Wedge angles + size
-        if is_neg:
-            wed_srt = mp.Vector3(z=1)
-            sgn = -1
-        else:
-            wed_srt = mp.Vector3(y=-1)
-            sgn = 1
-        wed_ang = 3*np.pi/2.
-        wed_rad = max((self.ly - self.gap_width)/2., self.blk_sze_z)
-
-        #Get center of cylinder from wafer positions (include scallops)
-        cy0 = edge.vertices[-1].y + sgn*(self.scallop_depth*2 + self.wall_thick)
-        cz0 = eblk.vertices[-1].z +  -1*(self.scallop_depth*2 + self.wall_thick)
-        #Account for shift in center
-        cy0 += (edge.vertices[-1].y + edge.vertices[-2].y)/2 - edge.vertices[-2].y
-        cz0 += (eblk.vertices[-1].z + eblk.vertices[-2].z)/2 - eblk.vertices[-2].z \
-            - eblk.center.z
-        waf_cen = mp.Vector3(0, cy0, cz0)
-
-        #Wafer
-        wafer = mp.Wedge(material=waf_mat, height=self.wafer_thick, center=waf_cen, \
-            radius=wed_rad, wedge_angle=wed_ang, wedge_start=wed_srt, axis=mp.Vector3(1))
-        geometry += [wafer]
-
-        #Skin
-        skn_cen = mp.Vector3(-(self.wafer_thick + self.skin_thick)/2., waf_cen.y, waf_cen.z)
-        skin = mp.Wedge(material=skn_mat, height=self.skin_thick, center=skn_cen, \
-            radius=wed_rad, wedge_angle=wed_ang, wedge_start=wed_srt, axis=mp.Vector3(1))
-        geometry += [skin]
-
-        return geometry
 
 ############################################
 ############################################

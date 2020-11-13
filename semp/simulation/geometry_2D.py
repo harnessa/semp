@@ -89,13 +89,15 @@ class Geometry_2D(object):
 
         return geometry
 
-    def build_edge(self, y0=None, y1=None, zdepth=mp.inf):
+    def build_edge(self, y0=None, y1=None, zdepth=mp.inf, waf_mat=None, skn_mat=None):
         #Container
         geometry = []
 
         #Materials
-        waf_mat = self.parent.wafer_mat_obj
-        skn_mat = self.parent.skin_mat_obj
+        if waf_mat is None:
+            waf_mat = self.parent.wafer_mat_obj
+        if skn_mat is None:
+            skn_mat = self.parent.skin_mat_obj
 
         #Set start point and width
         if y0 is None:
@@ -131,6 +133,8 @@ class Geometry_2D(object):
 
         #Scallops
         if self.scallop_depth > 0:
+            #Cylinder height start (gap width if end block, infinite for edges)
+            cyl_hgt_0 = zdepth - 2*(self.pmly + self.pady)
             #Radius (from height) + Horizontal offset (from depth)
             Rs = self.scallop_height/2.
             ys = Rs - self.scallop_depth
@@ -142,10 +146,13 @@ class Geometry_2D(object):
                 #Get new horizontal center point (accounting for taper angle)
                 ys0 = -y1 - (xs0 + self.wafer_thick/2) * \
                     np.tan(np.radians(self.taper_angle))
+                #Get new cylinder height (accounting for taper angle)
+                cyl_hgt = cyl_hgt_0 + 2*(xs0 + self.wafer_thick/2) * \
+                    np.tan(np.radians(self.taper_angle))
                 #Add cylinders
-                scl_cen = mp.Vector3(x=xs0, y=ys0 - ys)
+                scl_cen = mp.Vector3(x=xs0, y=ys0 + ys)
                 geometry += [mp.Cylinder(material=mp.air, radius=Rs, \
-                    height=zdepth, center=scl_cen)]
+                    height=cyl_hgt, center=scl_cen)]
                 #Step down to next cylinder's position
                 xs0 += 2*Rs
 
