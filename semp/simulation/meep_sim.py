@@ -34,13 +34,18 @@ class Meep_Sim(object):
         #Force datatypes
         self.resolution = int(self.resolution)
 
+        #Overwrite Sommerfeld solution
+        if self.is_sommerfeld:
+            self.apply_sommerfeld()
+
         #Calculate central frequency and width
         self.fcen = 1./self.wave
-        self.dfreq = self.fwid*self.fcen
 
-        #Polarization
+        #Polarization (primary and derivative fields)
         self.src_comp_name = {'s': 'Ez', 'p': 'Hz'}[self.polarization]
         self.src_comp = getattr(mp, self.src_comp_name)
+        self.drv_comp_name = {'s': 'Hy', 'p': 'Ey'}[self.polarization]
+        self.drv_comp = getattr(mp, self.drv_comp_name)
 
         #Source offset
         self.src_offset = mp.Vector3(y=self.source_offset_y, \
@@ -65,6 +70,18 @@ class Meep_Sim(object):
         else:
             self.geo = semp.simulation.Geometry_2D(self)
 
+    def apply_sommerfeld(self):
+        #Sommerfeld is infinitely thin PEC
+        self.wafer_material = 'metal'
+        self.skin_material = 'metal'
+        self.wafer_epsilon = None
+        self.skin_epsilon = None
+        for nme in ['skin_thick', 'wall_thick', 'scallop_depth', 'taper_angle']:
+            setattr(self, nme, 0)
+
+        #Infinitely thin = 2/res
+        self.wafer_thick = 2./self.resolution
+
 ############################################
 ############################################
 
@@ -80,17 +97,17 @@ class Meep_Sim(object):
         #Set material objects
         for ob in ['wafer', 'skin']:
 
-            if getattr(self, '%s_epsilon'%ob) is not None:
+            if getattr(self, f'{ob}_epsilon') is not None:
                 #Set via epsilon
-                eps = getattr(self, '%s_epsilon'%ob).real
-                Dcon = 2.*np.pi*self.fcen * getattr(self, '%s_epsilon'%ob).imag / \
+                eps = getattr(self, f'{ob}_epsilon').real
+                Dcon = 2.*np.pi*self.fcen * getattr(self, f'{ob}_epsilon').imag / \
                     self.wafer_epsilon.real
-                setattr(self, '%s_mat_obj'%ob, mp.Medium(epsilon=eps, D_conductivity=Dcon))
+                setattr(self, f'{ob}_mat_obj', mp.Medium(epsilon=eps, D_conductivity=Dcon))
 
             else:
                 #Get from library
-                setattr(self, '%s_mat_obj'%ob, getattr(mat_lib, \
-                    getattr(self,'%s_material'%ob)))
+                setattr(self, f'{ob}_mat_obj', getattr(mat_lib, \
+                    getattr(self, f'{ob}_material')))
 
 ############################################
 ############################################
@@ -125,8 +142,7 @@ class Meep_Sim(object):
         sim = mp.Simulation(split_chunks_evenly=True, force_complex_fields=True,
             ensure_periodicity=False, resolution=self.resolution, Courant=self.courant,
             cell_size=cell_size, boundary_layers=pml_layers, sources=sources,
-            geometry=geometry, symmetries=symmetries, k_point=k_point,
-            eps_averaging=False)    #FIXME: remove this
+            geometry=geometry, symmetries=symmetries, k_point=k_point)
 
         return sim
 
@@ -188,7 +204,7 @@ class Meep_Sim(object):
     def get_source_function(self):
 
         #Get source dependent
-        sim_src = mp.ContinuousSource(self.fcen, fwidth=self.dfreq, is_integrated=True)
+        sim_src = mp.ContinuousSource(self.fcen, is_integrated=True)
 
         #For amp func
         kk = 2.*np.pi*self.fcen

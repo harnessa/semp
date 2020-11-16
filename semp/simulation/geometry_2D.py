@@ -34,6 +34,8 @@ class Geometry_2D(object):
         self.set_distance_properties()
 
     def set_distance_properties(self):
+        #Dimensions
+        self.ndims = 2
 
         ## cell size ##
         self.lx = self.pmlx + self.padx + self.wafer_thick + self.padx + self.pmlx
@@ -44,10 +46,42 @@ class Geometry_2D(object):
         ## x ##
         self.source_x = -self.lx/2. + self.pmlx
         self.obs_pt_x = self.wafer_thick/2. + self.obs_distance - 1./self.resolution
+        self.non_pml_sx = self.lx - 2.*self.pmlx
 
         ## y ##
         self.non_pml_sy = self.ly - 2.*self.pmly
-        self.obs_pt_y = -self.gap_width/2. + self.obs_distance - 1./self.resolution
+
+        ## z ##
+        self.non_pml_sz = 0             #placeholder
+
+############################################
+############################################
+
+############################################
+####	Output Volume (shared 2D/3D)####
+############################################
+
+    def get_output_volume(self, is_vac=False):
+        #X sze/cen depending on output_full_dim
+        if self.parent.prop.output_full_dim:
+            cen = mp.Vector3()
+            x_sze = self.non_pml_sx
+        else:
+            cen = mp.Vector3(x=self.obs_pt_x)
+            x_sze = 0
+
+        #YZ sze depending on is_vac
+        if is_vac:
+            y_sze, z_sze = 0, 0
+        else:
+            y_sze, z_sze = self.non_pml_sy, self.non_pml_sz
+
+        sze = mp.Vector3(x=x_sze, y=y_sze, z=z_sze)
+
+        #Volume
+        vol = mp.Volume(center=cen, size=sze, dims=self.ndims)
+
+        return vol
 
 ############################################
 ############################################
@@ -123,7 +157,6 @@ class Geometry_2D(object):
         skn_cen = mp.Vector3(skcx, skcy, skcz)
         skin = mp.Block(material=skn_mat, size=skn_sze, center=skn_cen)
         geometry += [skin]
-
 
         #Sidewalls
         if self.wall_thick > 0:

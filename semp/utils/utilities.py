@@ -63,8 +63,8 @@ class Utilities(object):
         for k,v in params.items():
             #Error message if unknown parameter supplied
             if k not in def_keys:
-                print('\n' + bad_str + ' New Parameter not in Defaults: %s ' \
-                    %self.color_string(k, self.neutral_color) + bad_str + '\n')
+                col_str = self.color_string(k, self.neutral_color)
+                print(f'\n{bad_str} New Parameter not in Defaults: {col_str} {bad_str}\n')
                 import sys; sys.exit(0)
 
             setattr(parent, k, v)

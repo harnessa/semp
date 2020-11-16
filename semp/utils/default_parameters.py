@@ -16,7 +16,7 @@ import numpy as np
 """ All units in [um] unless specificed others """
 
 #Default base directory
-base_dir = r"%s/Results"%semp.pkg_home_dir
+base_dir = rf"{semp.pkg_home_dir}/Results"
 
 #Default parameters for Meep simulation
 def_params_MEEP = {
@@ -36,14 +36,14 @@ def_params_MEEP = {
     'skin_material':    'metal',
     'wafer_epsilon':    None,      # Complex permittivity of wafer material
     'skin_epsilon':     None,      # Complex permittivity of skin material
+    'is_sommerfeld':    False,     # Is sommerfeld solution model
     'wafer_thick':      1.,
     'skin_thick':       0.,
     'wall_thick':       0.,
     'gap_width':        5.,
     'scallop_height':   0.,        # Height or distance between scallops
-    'scallop_depth':    0.,        # Depth of scallops
+    'scallop_depth':    0.,        # Depth of scallops (>0 turns on scallops)
     'taper_angle':      0,         # Angle to taper edge [deg]
-    'is_sommerfeld':    False,     # Is sommerfeld solution model
     'corner_length':    0.,
     'corner_dy':        0.,        # Distance broken corner extrudes in y
     'corner_dz':        0.,        # Distance broken corner extrudes in z
@@ -57,9 +57,7 @@ def_params_MEEP = {
     'padx':             6.,
     'pady':             6.,
     'padz':             6.,
-    'fwid':             0.2,       # Frequency width [multiple of frequency]
     'n_periods':        50,        # Number of optical time periods to run
-    'decay_tol':        1e-9,      # Run until decays to this level
     'courant':          0.5,       # Courant number (lower is slower, but more numerically stable)
 }
 
@@ -78,7 +76,9 @@ def_params_PROP = {
     'session_name':     '',
     'save_ext':         '',
     'do_save':          False,     # Save data?
-    'save_all_comps':   False,     # Save all field components?
+
+    ### Output ###
+    'output_full_dim':  False,     # Output full dimension? (i.e., plane for 2D, volume for 3D)
 
 }
 

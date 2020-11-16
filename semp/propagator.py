@@ -77,7 +77,52 @@ class Propagator(object):
 ############################################
 
     def run_propagation(self):
-        import pdb;pdb.set_trace()
+
+        #Run sim in vacuum
+        vac_data = self.run_single_propagation(is_vac=True)
+
+        #Run sim with wafer
+        waf_data = self.run_single_propagation(is_vac=False)
+
+        #Save data
+        self.logger.save_data({'vac':vac_data, 'waf':waf_data})
+
+        #Cleanup
+        del vac_data, waf_data
+
+    def run_single_propagation(self, is_vac=False):
+
+        #Build simulation
+        sim = self.meep_sim.build_sim(is_vac=is_vac)
+
+        #Run sim
+        sim.run(until=self.meep_sim.run_time)
+
+        #Synchronize magnetic field
+        sim.fields.synchronize_magnetic_fields()
+
+        #Get ouput volume
+        vol = self.meep_sim.geo.get_output_volume(is_vac=is_vac)
+
+        #Get field array slice
+        fld_arr = sim.get_array(vol=vol, component=self.meep_sim.src_comp, cmplx=True)
+
+        #Get derivative field array slice
+        drv_arr = sim.get_array(vol=vol, component=self.meep_sim.drv_comp, cmplx=True)
+
+        #Get observation points (don't return w)
+        xyzw = sim.get_array_metadata(vol=vol)
+
+        #Reset sim
+        sim.reset_meep()
+
+        #Cleanup
+        del sim
+
+        #Build return package
+        ret_pkg = {'fld':fld_arr, 'drv':drv_arr, 'xyz':xyzw[:3]}
+
+        return ret_pkg
 
 ############################################
 ############################################

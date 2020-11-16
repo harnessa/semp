@@ -19,11 +19,11 @@ MEEP_params = {
     'wave':             0.641,
 
     ### Mask Properties ###
-    # 'sim_geometry':     'edge',
+    # 'sim_geometry':     'corner',
     # 'wafer_material':   'cSi',
-    'wafer_thick':      2.,
     # 'skin_material':    'Au',
-    'skin_thick':       0.4,
+    'wafer_thick':      2.,
+    'skin_thick':       0.,
     'gap_width':        5,
 
     # 'taper_angle':      20,
@@ -34,24 +34,20 @@ MEEP_params = {
     ### Numerics ###
     'resolution':       20,
     'padx':             2,
-    'pady':             2.,
-    'padz':             2.,
-    'n_periods':        50,
+    'pady':             2,
+    'padz':             2,
+    'n_periods':        40,
     # 'use_absorber':     True,
 }
 
 PROP_params = {
     'save_nt':          3,
     'do_save':          True,
-    'session_name':     'test',
+    'session_name':     'new_test',
     'save_ext':         '',
-    'is_movie':         True,
+    # 'is_movie':         True,
+    'output_full_dim':  True,
 }
 
 prop = semp.Propagator(MEEP_params, PROP_params)
 prop.run_sim()
-
-# import matplotlib.pyplot as plt;plt.ion()
-# eps = np.abs(prop.get_epsilon())
-#
-# import pdb;pdb.set_trace()

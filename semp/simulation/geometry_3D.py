@@ -30,14 +30,18 @@ class Geometry_3D(Geometry_2D):
         self.set_distance_properties_3D()
 
     def set_distance_properties_3D(self):
+        #Dimensions
+        self.ndims = 3
 
         ## cell size ##
         self.lz = self.pmlz + self.padz + self.corner_length + self.pmlz
         self.cell_size = mp.Vector3(self.lx, self.ly, self.lz)
 
         ## z ##
-        self.non_pml_sz = self.lz - 2.*self.pmlz
         self.blk_sze_z = self.pmlz + self.padz
+        self.non_pml_sz = self.lz - 2.*self.pmlz
+
+        ## corner ##
         self.with_broken_corner = self.corner_dy > 0 and self.corner_dz > 0
 
 ############################################

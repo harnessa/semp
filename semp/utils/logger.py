@@ -69,6 +69,8 @@ class Logger(object):
         ext = self.prop.save_ext
         if ext != '':
             ext = '__' + ext
+        #Add polarization to end of everything
+        ext = f'{ext}__{self.prop.meep_sim.polarization}'
         return ext
 
 ############################################
@@ -168,6 +170,37 @@ class Logger(object):
         pickle.dump(self.prop.params,      open(self.filename('parameters', 'pck'), 'wb'))
         #Save default parameters
         pickle.dump(semp.utils.def_params, open(self.filename('def_params', 'pck'), 'wb'))
+
+    def save_data(self, in_data):
+        #Let processors catch up
+        semp.mpi_barrier()
+
+        #Return immediately if not saving or if not zero-rank processor
+        if not self.writeable:
+            return
+
+        #Get file name
+        fname = self.filename('results', 'h5')
+
+        #Save data
+        with h5py.File(fname, 'w') as f:
+            for grp in ['vac', 'waf']:
+                #Create group
+                f.create_group(grp)
+                #Field data
+                f[grp].create_dataset('fld', data=in_data[grp]['fld'])
+                f[grp].create_dataset('drv', data=in_data[grp]['drv'])
+                #Observation points
+                for j in range(3):
+                    obs_nme = ['x','y','z'][j]
+                    f[grp].create_dataset(obs_nme, data=in_data[grp]['xyz'][j])
+
+############################################
+############################################
+
+############################################
+#####   Loading functions #####
+############################################
 
 ############################################
 ############################################

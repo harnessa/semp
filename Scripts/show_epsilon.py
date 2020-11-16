@@ -41,9 +41,9 @@ MEEP_params = {
 
     ### Numerics ###
     'resolution':       10,
-    'padx':             1/2,
-    'pady':             1/2,
-    'padz':             1/2,
+    'pmlx':             1/2,
+    'pmly':             1/2,
+    'pmlz':             1/2,
     'padx':             1/2,
     'pady':             1/2,
     'padz':             1/2,

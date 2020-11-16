@@ -58,7 +58,7 @@ class Movie_Maker(object):
         cmd = f'h5topng -t 0:{n_imgs} -R -Zc dkbluered -a yarg {eps} {filename}.h5'
 
         #Run command and return status
-        return self.run_command(cmd)
+        return self.run_shell_command(cmd)
 
     def run_make_movie(self, file_end):
         #File names
@@ -69,7 +69,7 @@ class Movie_Maker(object):
         cmd = f'convert {png_name}*.png {gif_name}.gif'
 
         #Run command and return status
-        return self.run_command(cmd)
+        return self.run_shell_command(cmd)
 
     def run_clean_images(self):
         #File names
@@ -79,7 +79,7 @@ class Movie_Maker(object):
         cmd = f'rm {png_name}*.png'
 
         #Run command and return status
-        return self.run_command(cmd)
+        return self.run_shell_command(cmd)
 
 ############################################
 ############################################
@@ -88,7 +88,7 @@ class Movie_Maker(object):
 ####	Common Functions ####
 ############################################
 
-    def run_command(self, cmd):
+    def run_shell_command(self, cmd):
         #Run command
         out = subprocess.run(cmd, shell=True, capture_output=True)
 

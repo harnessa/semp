@@ -43,7 +43,7 @@ if pkg_home_dir is None:
     import sys
     sys.exit()
 
-results_dir = "%s/Research/Optics_Modeling/Semp_Results"%os.getenv("HOME")
+results_dir = rf"{os.getenv('HOME')}/Research/Optics_Modeling/Semp_Results"
 ext_data_dir = f"{pkg_home_dir}/External_Data"
 int_data_dir = f"{pkg_home_dir}/Internal_Data"
 
