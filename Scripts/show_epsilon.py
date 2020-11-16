@@ -27,17 +27,17 @@ MEEP_params = {
     'skin_material':    'metal',
     'wafer_thick':      2.,
     'skin_thick':       0.4,
-    'gap_width':        3,
+    'gap_width':        5,
 
-    'taper_angle':      20,
+    # 'taper_angle':      20,
     # 'wall_thick':       0.4,
     # 'scallop_height':   0.8,
     # 'scallop_depth':    0.2,
 
     'sim_geometry':     'corner',
-    'corner_length':    2,
+    'corner_length':    4,
     'corner_dy':        1.5,
-    'corner_dz':        1.,
+    'corner_dz':        1.5,
 
     ### Numerics ###
     'resolution':       10,

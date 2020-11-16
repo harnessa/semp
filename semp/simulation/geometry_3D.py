@@ -99,19 +99,19 @@ class Geometry_3D(Geometry_2D):
 
         #Add all shapes together (order matters!)
         geometry = edge1 + edge2 + eblk
-        # geometry = eblk
 
         #Add broken corner
         if self.with_broken_corner:
             geometry += self.add_broken_corner(eblk, edge1, edge2)
 
         #Shift by 1 resolution element (why?)
-        # geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
-        # geometry = self.shift_edge(geometry, 'z', -1/self.resolution)
+        geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
+        geometry = self.shift_edge(geometry, 'z', -1/self.resolution)
 
         return geometry
 
     def shift_edge(self, edge, comp, dshf):
+
         #Loop through shapes
         for cur_shp in edge:
 
@@ -158,57 +158,46 @@ class Geometry_3D(Geometry_2D):
 
     def add_broken_corner(self, eblk, edge1, edge2):
         #Oversize to account for taper angle
-        widy = self.corner_dy + 2*self.wafer_thick * np.arctan(np.radians(self.taper_angle))
-        widz = self.corner_dz + self.wafer_thick * np.arctan(np.radians(self.taper_angle))
+        widy = self.ly
+        widz = self.lz
 
-        ### Y Wall ###
+        #Build wall with largest edge
+        if self.corner_dz > self.corner_dy:
 
-        #Get y_wall and rotate to align along y (1 is irrelevant, just needs >0)
-        y_wall = self.rotate_edge_z2y(self.build_edge(y0=self.lz/2, \
-            y1=self.lz/2 - widz, zdepth=self.corner_dy))
-        #Get shift for y_wall from z=0 to end_block
-        yw_dz = eblk[0].vertices[-2].z + widz/2.
-        #Account for shift in center
-        yw_dz += (eblk[0].vertices[-1].z + eblk[0].vertices[-2].z)/2 - \
-                  eblk[0].vertices[-2].z - eblk[0].center.z
-        #Account for oversize
-        yw_dz += self.corner_dz - widz
-        #Do shift
-        y_wall = self.shift_edge(y_wall, 'z',  yw_dz)
-        #Shift y_wall from y=0 to edge
-        yw_dy = edge2[0].vertices[-2].y - self.corner_dy/2.
-        y_wall = self.shift_edge(y_wall, 'y',  yw_dy)
+            ### Y Wall ###
 
-        ### Z Wall ###
+            #Get y_wall
+            yw_sy = -(edge1[0].vertices[-2].y + self.corner_dy)
+            y_wall = self.build_edge(y0=self.ly/2, y1=yw_sy, zdepth=widz)
 
-        #Get z_wall
-        z_wall = self.build_edge(y0=self.ly/2, y1=self.ly/2 - widy, \
-            zdepth=self.corner_dz)
-        #Get shift to y=0 (use skin)
-        zw_dy = -z_wall[1].center.y
-        #Add shift to edge
-        zw_dy += edge2[0].vertices[-2].y - widy/2
-        #Account for oversize
-        zw_dy += self.corner_dy - widy
+            #Shift to end block
+            yw_dz = -self.lz + self.blk_sze_z + self.corner_dz
+            ##Account for taper angle (not if only one wall)
+            # yw_dz -= self.wafer_thick * np.arctan(np.radians(self.taper_angle))
+            y_wall = self.shift_edge(y_wall, 'z', yw_dz)
 
-        #Do shift
-        z_wall = self.shift_edge(z_wall, 'y', zw_dy)
-        #Shift z_wall from z=widz/2 to end block
-        #Get shift for y_wall from z=0 to end_block
-        zw_dz = -z_wall[1].center.z + eblk[0].vertices[-2].z + widz/2.
-        #Account for shift in center
-        zw_dz += (eblk[0].vertices[-1].z + eblk[0].vertices[-2].z)/2 - \
-                  eblk[0].vertices[-2].z - eblk[0].center.z
+            return y_wall
 
-        z_wall = self.shift_edge(z_wall, 'z', zw_dz)
-        print(z_wall[0].center, z_wall[1].center)
-        # import  pdb;pdb.set_trace()
+        else:
 
-        #Geometry to return
-        # ret_geo = y_wall #+ z_wall
-        ret_geo = z_wall
+            ### Z Wall ###
 
-        return ret_geo
+            #Get z_wall and rotate to align along y (resets to 0)
+            z_wall = self.rotate_edge_z2y(self.build_edge(y0=self.lz/2, \
+                y1=self.lz/2 - widz, zdepth=widy))
+
+            #Shift to edge
+            zw_dy = -self.ly/2. - z_wall[0].height/2. + \
+                (self.ly/2. - edge2[0].vertices[-2].y) + self.corner_dy
+            ##Account for taper angle (not if only one wall)
+            # zw_dy -= self.wafer_thick * np.arctan(np.radians(self.taper_angle))
+            z_wall = self.shift_edge(z_wall, 'y', zw_dy)
+
+            #Shift to end block
+            zw_dz = -self.lz/2 - widz/2 + self.blk_sze_z + self.corner_dz
+            z_wall = self.shift_edge(z_wall, 'z', zw_dz)
+
+            return z_wall
 
 ############################################
 ############################################
