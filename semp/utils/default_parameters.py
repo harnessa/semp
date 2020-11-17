@@ -18,6 +18,10 @@ import numpy as np
 #Default base directory
 base_dir = rf"{semp.pkg_home_dir}/Results"
 
+############################################
+####	MEEP Parameters ####
+############################################
+
 #Default parameters for Meep simulation
 def_params_MEEP = {
 
@@ -64,6 +68,10 @@ def_params_MEEP = {
 ##############################################
 ##############################################
 
+############################################
+####	PROP Parameters ####
+############################################
+
 #Default parameters for Propagator
 def_params_PROP = {
 
@@ -72,14 +80,33 @@ def_params_PROP = {
     'is_movie':         False,     # Run movie?
 
     ### Saving ###
-    'save_dir_base':    semp.results_dir,
-    'session_name':     '',
-    'save_ext':         '',
+    'base_dir':         semp.results_dir,       # Directory base
+    'session':          '',        # Session: save under 'base_dir/session'
+    'ext':              '',        # Extension to append to end of each file
     'do_save':          False,     # Save data?
 
     ### Output ###
     'output_full_dim':  False,     # Output full dimension? (i.e., plane for 2D, volume for 3D)
 
+}
+
+##############################################
+##############################################
+
+############################################
+####	ANLZ Parameters ####
+############################################
+
+#Default parameters for Analyzer
+def_params_ANLZ = {
+    ### Saving ###
+    'do_save':          False,
+    'save_dir':         None,      # If None, save to load dir
+    ### Loading ###
+    'base_dir':         semp.results_dir,       # Directory base
+    'session':          '',        # Session: load from 'base_dir/session'
+    'ext':              '',        # Extension to append to end of each file
+    'polarization':     's',       # Polarization. Options:'s'-skipping, 'p'-plunging
 }
 
 ##############################################

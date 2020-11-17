@@ -26,6 +26,10 @@ class Movie_Maker(object):
 ############################################
 
     def make_movie(self, file_end):
+        #Return if analysis
+        if self.parent.is_analysis:
+            return
+
         #Wait for processors to catch up
         semp.MPI.COMM_WORLD.Barrier()
 
@@ -62,8 +66,8 @@ class Movie_Maker(object):
 
     def run_make_movie(self, file_end):
         #File names
-        png_name = f'{self.parent.logger.save_dir}/{self.parent.meep_sim.src_comp_name.lower()}'
-        gif_name = f'{self.parent.logger.save_dir}/{file_end}'
+        png_name = f'{self.parent.logger.data_dir}/{self.parent.msim.src_comp_name.lower()}'
+        gif_name = f'{self.parent.logger.data_dir}/{file_end}'
 
         #Build command
         cmd = f'convert {png_name}*.png {gif_name}.gif'
@@ -73,7 +77,7 @@ class Movie_Maker(object):
 
     def run_clean_images(self):
         #File names
-        png_name = f'{self.parent.logger.save_dir}/{self.parent.meep_sim.src_comp_name.lower()}'
+        png_name = f'{self.parent.logger.data_dir}/{self.parent.msim.src_comp_name.lower()}'
 
         #Build command
         cmd = f'rm {png_name}*.png'

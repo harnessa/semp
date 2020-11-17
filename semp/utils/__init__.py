@@ -10,6 +10,6 @@ Description: __init__ package for the UTILS module
 License: Refer to $pkg_home_dir/LICENSE
 """
 
-from semp.utils.default_parameters import def_params
+from semp.utils.default_parameters import def_params, def_params_ANLZ
 from semp.utils.logger import Logger
 from semp.utils.utilities import Utilities, util

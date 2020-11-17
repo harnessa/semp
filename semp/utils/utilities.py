@@ -51,8 +51,11 @@ class Utilities(object):
                 usr_pms[k] = v
         return usr_pms
 
-    def set_default_params(self, parent, params, def_pms):
+    def set_default_params(self, parent, params, in_def_pms):
         bad_str = self.color_string('!*!', self.bad_color)
+
+        #Copy defaults
+        def_pms = self.deepcopy(in_def_pms)
 
         #Set default parameters
         for k,v in def_pms.items():

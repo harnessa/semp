@@ -68,11 +68,11 @@ class Geometry_2D(object):
             x_sze = self.non_pml_sx
         else:
             cen = mp.Vector3(x=self.obs_pt_x)
-            x_sze = 0
+            x_sze = 1/self.resolution
 
         #YZ sze depending on is_vac
         if is_vac:
-            y_sze, z_sze = 0, 0
+            y_sze, z_sze = 1/self.resolution, 1/self.resolution
         else:
             y_sze, z_sze = self.non_pml_sy, self.non_pml_sz
 

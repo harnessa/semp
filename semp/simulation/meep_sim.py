@@ -186,7 +186,7 @@ class Meep_Sim(object):
 
     def get_source(self, is_vac):
         #Center of source
-        src_pt = mp.Vector3(x=self.source_distance)
+        src_pt = mp.Vector3(x=self.geo.source_x)
 
         #Size of source
         src_sze_y = [self.geo.ly, 0.][is_vac]

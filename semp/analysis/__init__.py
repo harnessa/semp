@@ -10,4 +10,5 @@ Description: __init__ package for the ANALYSIS module
 License: Refer to $pkg_home_dir/LICENSE
 """
 
+from semp.analysis.analyzer import Analyzer
 from semp.analysis.movie_maker import Movie_Maker

@@ -31,12 +31,13 @@ class Logger(object):
 ############################################
 
     def initialize(self):
-        self.save_dir = f"{self.prop.save_dir_base}/{self.prop.session_name}"
+        self.data_dir = f"{self.prop.base_dir}/{self.prop.session}"
+        self.log_ext = self.get_log_ext()
 
     def start_up(self):
         #Create save directory
         if self.writeable:
-            self.util.create_directory(self.save_dir)
+            self.util.create_directory(self.data_dir)
         #Start
         self.start_time = time.perf_counter()
         self.open_log_file()
@@ -64,15 +65,6 @@ class Logger(object):
     def writeable(self):
         return self.prop.do_save and semp.zero_rank and not self.prop.is_analysis
 
-    @property
-    def ext(self):
-        ext = self.prop.save_ext
-        if ext != '':
-            ext = '__' + ext
-        #Add polarization to end of everything
-        ext = f'{ext}__{self.prop.meep_sim.polarization}'
-        return ext
-
 ############################################
 ############################################
 
@@ -80,10 +72,23 @@ class Logger(object):
 #####  File Functions #####
 ############################################
 
-    def filename(self,base_name,file_type,ext=None):
+    def filename(self,base_name,file_type,ext=None,data_dir=None):
+        if data_dir is None:
+            data_dir = self.data_dir
         if ext is None:
-            ext = self.ext
-        return f"{self.save_dir}/{base_name}{ext}.{file_type}"
+            ext = self.log_ext
+        return f"{data_dir}/{base_name}{ext}.{file_type}"
+
+    def get_log_ext(self, ext=None, pol=None):
+        if ext is None:
+            ext = self.prop.ext
+        if ext != '':
+            ext = '__' + ext
+        #Add polarization to end of everything
+        if pol is None:
+            pol = self.prop.msim.polarization
+        ext = f'{ext}__{pol}'
+        return ext
 
     def open_log_file(self):
         #Return immediately if not writeable
@@ -143,7 +148,7 @@ class Logger(object):
 
     def print_starting_message(self):
         self.write(is_brk=True)
-        self.write(txt=f'Starting SEMP run at: {self.prop.session_name}/{self.prop.save_ext} ...',is_time=True,n_strs=3)
+        self.write(txt=f'Starting SEMP run at: {self.prop.session}/{self.prop.ext} ...',is_time=True,n_strs=3)
         self.write(is_brk=True)
 
     def print_finishing_message(self):
@@ -166,12 +171,12 @@ class Logger(object):
         if not self.writeable:
             return
 
-        #Save parameters
+        #Save user parameters
         pickle.dump(self.prop.params,      open(self.filename('parameters', 'pck'), 'wb'))
         #Save default parameters
         pickle.dump(semp.utils.def_params, open(self.filename('def_params', 'pck'), 'wb'))
 
-    def save_data(self, in_data):
+    def save_propagation_data(self, in_data):
         #Let processors catch up
         semp.mpi_barrier()
 
@@ -184,16 +189,16 @@ class Logger(object):
 
         #Save data
         with h5py.File(fname, 'w') as f:
+            #Add metadata
+            f.attrs['fld_comp'] = self.prop.msim.src_comp_name
+            f.attrs['drv_comp'] = self.prop.msim.drv_comp_name
+            #Loop through wafer and vacuum groups
             for grp in ['vac', 'waf']:
                 #Create group
-                f.create_group(grp)
-                #Field data
-                f[grp].create_dataset('fld', data=in_data[grp]['fld'])
-                f[grp].create_dataset('drv', data=in_data[grp]['drv'])
-                #Observation points
-                for j in range(3):
-                    obs_nme = ['x','y','z'][j]
-                    f[grp].create_dataset(obs_nme, data=in_data[grp]['xyz'][j])
+                fgrp = f.create_group(grp)
+                #Loop through and save data
+                for k,v in in_data[grp].items():
+                    fgrp.create_dataset(k, data=v)
 
 ############################################
 ############################################
@@ -201,6 +206,58 @@ class Logger(object):
 ############################################
 #####   Loading functions #####
 ############################################
+
+
+    def load_parameters(self, alz=None):
+        #Load from analyzer
+        if alz is not None:
+            ext = self.get_log_ext(self, ext=alz.ext, pol=alz.polarization)
+            usr_fname = self.filename(self, 'parameters', 'pck', ext=ext, data_dir=alz.data_dir)
+            def_fname = self.filename(self, 'def_params', 'pck', ext=ext, data_dir=alz.data_dir)
+        else:
+            usr_fname = self.filename('parameters', 'pck')
+            def_fname = self.filename('def_params', 'pck')
+
+        #Load parameters
+        usr_pms = pickle.load(open(usr_fname, 'rb'))
+        def_pms = pickle.load(open(def_fname, 'rb'))
+
+        #Start with default values
+        MEEP_params = def_pms['MEEP_params']
+        PROP_params = def_pms['PROP_params']
+
+        #Overwrite with usr params
+        for k, v in usr_pms['MEEP_params'].items():
+            MEEP_params[k] = v
+
+        for k, v in usr_pms['PROP_params'].items():
+            PROP_params[k] = v
+
+        #Join
+        params = {'MEEP_params':MEEP_params, 'PROP_params':PROP_params }
+
+        return params
+
+    def load_propagation_data(self):
+
+        #Get file name
+        fname = self.filename('results', 'h5')
+
+        #Create data package
+        data = {}
+
+        #Save data
+        with h5py.File(fname, 'r') as f:
+            #Metadata
+            data['fld_comp'] = f.attrs['fld_comp']
+            data['drv_comp'] = f.attrs['drv_comp']
+            #Loop through groups
+            for grp in ['vac', 'waf']:
+                #Loop through and store data
+                for k, v in f[grp].items():
+                    data[f'{grp}_{k}'] = v[()]
+
+        return data
 
 ############################################
 ############################################

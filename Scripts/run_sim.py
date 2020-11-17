@@ -24,18 +24,19 @@ MEEP_params = {
     # 'skin_material':    'Au',
     'wafer_thick':      2.,
     'skin_thick':       0.,
-    'gap_width':        5,
+    'gap_width':        3,
 
     # 'taper_angle':      20,
     # 'wall_thick':       0.2,
     # 'scallop_height': 0.8,
     # 'scallop_depth': 0.2,
+    'corner_length':    1,
 
     ### Numerics ###
     'resolution':       20,
-    'padx':             2,
-    'pady':             2,
-    'padz':             2,
+    'padx':             1,
+    'pady':             1,
+    'padz':             1,
     'n_periods':        40,
     # 'use_absorber':     True,
 }
@@ -43,9 +44,9 @@ MEEP_params = {
 PROP_params = {
     'save_nt':          3,
     'do_save':          True,
-    'session_name':     'new_test',
-    'save_ext':         '',
-    # 'is_movie':         True,
+    # 'session':          'corner_test',
+    'session':          'test',
+    'ext':              'full',
     'output_full_dim':  True,
 }
 
