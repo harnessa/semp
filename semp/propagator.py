@@ -44,6 +44,10 @@ class Propagator(object):
         #Load logger class
         self.logger = semp.utils.Logger(self)
 
+        #Verbosity
+        if not self.verbose:
+            mp.verbosity(0)
+
 ############################################
 ############################################
 
@@ -84,11 +88,18 @@ class Propagator(object):
         #Run sim with wafer
         waf_data = self.run_single_propagation(is_vac=False)
 
-        #Save data
-        self.logger.save_propagation_data({'vac':vac_data, 'waf':waf_data})
+        #Data package
+        data_pkg = {'vac':vac_data, 'waf':waf_data}
 
-        #Cleanup
-        del vac_data, waf_data
+        #Save data
+        self.logger.save_propagation_data(data_pkg)
+
+        #Store data
+        if self.store_results:
+            self.data_pkg = self.logger.convert_data_package(data_pkg)
+        else:
+            #Cleanup
+            del vac_data, waf_data, data_pkg
 
     def run_single_propagation(self, is_vac=False):
 
@@ -113,6 +124,9 @@ class Propagator(object):
         #Get observation points (don't return w)
         xx, yy, zz, ww = sim.get_array_metadata(vol=vol)
 
+        #Adjust coordinates
+        xx, yy, zz = self.msim.adjust_coordinates(xx, yy, zz)
+
         #Get material map (epsilon)
         eps = sim.get_array(vol=vol, component=mp.Dielectric)
 
@@ -123,8 +137,8 @@ class Propagator(object):
                 print('\nVacuum not uniform over Y!\n')
             fld = fld.mean(1)
             drv = drv.mean(1)
-            yy = np.atleast_1d(np.mean(yy))
-            zz = np.atleast_1d(np.mean(zz))
+            yy = np.mean(yy)
+            zz = np.mean(zz)
 
         #Reset sim
         sim.reset_meep()

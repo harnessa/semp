@@ -133,7 +133,8 @@ class Logger(object):
             new_str = f'{str_str} {txt} {str_str}{skp}'
 
         #Print
-        print(new_str)
+        if self.prop.verbose:
+            print(new_str)
 
         #Write to log
         if self.writeable:
@@ -207,7 +208,6 @@ class Logger(object):
 #####   Loading functions #####
 ############################################
 
-
     def load_parameters(self, alz=None):
         #Load from analyzer
         if alz is not None:
@@ -256,6 +256,22 @@ class Logger(object):
                 #Loop through and store data
                 for k, v in f[grp].items():
                     data[f'{grp}_{k}'] = v[()]
+
+        return data
+
+    def convert_data_package(self, in_data):
+        #Create data package
+        data = {}
+
+        #Metadata
+        data['fld_comp'] = self.prop.msim.src_comp_name
+        data['drv_comp'] = self.prop.msim.drv_comp_name
+
+        #Loop through groups
+        for grp in ['vac', 'waf']:
+            #Loop through and store data
+            for k, v in in_data[grp].items():
+                data[f'{grp}_{k}'] = v
 
         return data
 

@@ -34,6 +34,9 @@ class Meep_Sim(object):
         #Force datatypes
         self.resolution = int(self.resolution)
 
+        #Set pads + pmls
+        self.set_pads_pmls()
+
         #Overwrite Sommerfeld solution
         if self.is_sommerfeld:
             self.apply_sommerfeld()
@@ -69,6 +72,14 @@ class Meep_Sim(object):
             self.geo = semp.simulation.Geometry_3D(self)
         else:
             self.geo = semp.simulation.Geometry_2D(self)
+
+    def set_pads_pmls(self):
+        #Set all components if specified
+        for comp in ['x','y','z']:
+            if self.pml_all is not None:
+                setattr(self, f'pml{comp}', self.pml_all)
+            if self.pad_all is not None:
+                setattr(self, f'pad{comp}', self.pad_all)
 
     def apply_sommerfeld(self):
         #Sommerfeld is infinitely thin PEC
@@ -231,6 +242,30 @@ class Meep_Sim(object):
             return []
         else:
             return self.geo.get_geometry()
+
+############################################
+############################################
+
+############################################
+####	Misc Functions ####
+############################################
+
+    def adjust_coordinates(self, xx, yy, zz):
+        #Turn into arrays
+        xx, yy, zz = np.atleast_1d(xx),  np.atleast_1d(yy),  np.atleast_1d(zz)
+
+        #Shift y if edge
+        if self.sim_geometry == 'edge':
+            yy += self.gap_width/2
+
+        #Shift x to bottom of wafer
+        xx += self.geo.wafer_thick/2
+
+        #Shift by 1/2 resolution
+        xx -= 1/self.resolution/2
+        yy -= 1/self.resolution/2
+
+        return xx, yy, zz
 
 ############################################
 ############################################

@@ -121,6 +121,10 @@ class Geometry_2D(object):
             #Build edge and flip coordinates
             geometry += self.flip_edge_y(self.build_edge())
 
+        #Shift by 1 resolution element
+        geometry = self.shift_edge(geometry, 'x', -1/self.resolution)
+        geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
+
         return geometry
 
     def build_edge(self, y0=None, y1=None, zdepth=mp.inf):
@@ -192,6 +196,27 @@ class Geometry_2D(object):
                 xs0 += 2*Rs
 
         return geometry
+
+############################################
+############################################
+
+############################################
+####	Shape Manipulation ####
+############################################
+
+    def shift_edge(self, edge, comp, dshf):
+        #Loop through shapes
+        for cur_shp in edge:
+
+            #Is prism
+            if isinstance(cur_shp, mp.geom.Prism):
+                for p in cur_shp.vertices:
+                    setattr(p, comp, getattr(p, comp) + dshf)
+
+            #Shift center for all
+            setattr(cur_shp.center, comp, getattr(cur_shp.center, comp) + dshf)
+
+        return edge
 
     def flip_edge_y(self, edge):
         #Loop through shapes

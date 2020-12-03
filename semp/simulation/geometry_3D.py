@@ -108,57 +108,12 @@ class Geometry_3D(Geometry_2D):
         if self.with_broken_corner:
             geometry += self.add_broken_corner(eblk, edge1, edge2)
 
-        #Shift by 1 resolution element (why?)
+        #Shift by 1 resolution element
+        geometry = self.shift_edge(geometry, 'x', -1/self.resolution)
         geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
         geometry = self.shift_edge(geometry, 'z', -1/self.resolution)
 
         return geometry
-
-    def shift_edge(self, edge, comp, dshf):
-
-        #Loop through shapes
-        for cur_shp in edge:
-
-            #Is prism
-            if isinstance(cur_shp, mp.geom.Prism):
-                for p in cur_shp.vertices:
-                    setattr(p, comp, getattr(p, comp) + dshf)
-
-            #Shift center for all
-            setattr(cur_shp.center, comp, getattr(cur_shp.center, comp) + dshf)
-
-        return edge
-
-    def rotate_edge_z2y(self, edge):
-        #Get y-centers of each component so that we can realign on wafer block
-        ycens = [ee.center.y for ee in edge]
-
-        #Loop through shapes
-        for i in range(len(edge)):
-            #Current shape
-            cur_shp = edge[i]
-
-            #Is Block
-            if isinstance(cur_shp, mp.geom.Block):
-                cur_shp.e1 = mp.Vector3(1,0,0)
-                cur_shp.e2 = mp.Vector3(0,0,1)
-                cur_shp.e3 = mp.Vector3(0,1,0)
-
-            #Is Prism
-            elif isinstance(cur_shp, mp.geom.Prism):
-                for j in range(len(cur_shp.vertices)):
-                    cur_shp.vertices[j] = \
-                        cur_shp.vertices[j].rotate(mp.Vector3(1,0,0), np.pi/2)
-                cur_shp.axis = mp.Vector3(0,1,0)
-
-            #Is Cylinder
-            else:
-                cur_shp.axis = mp.Vector3(0,1,0)
-
-            #Move center to x=original; y=0; z=around 0, but keeping relative to skin [1]
-            cur_shp.center = mp.Vector3(cur_shp.center.x, 0, ycens[i] - ycens[1])
-
-        return edge
 
     def add_broken_corner(self, eblk, edge1, edge2):
         #Oversize to account for taper angle
@@ -202,6 +157,44 @@ class Geometry_3D(Geometry_2D):
             z_wall = self.shift_edge(z_wall, 'z', zw_dz)
 
             return z_wall
+
+############################################
+############################################
+
+############################################
+####	Shape Manipulation ####
+############################################
+
+    def rotate_edge_z2y(self, edge):
+        #Get y-centers of each component so that we can realign on wafer block
+        ycens = [ee.center.y for ee in edge]
+
+        #Loop through shapes
+        for i in range(len(edge)):
+            #Current shape
+            cur_shp = edge[i]
+
+            #Is Block
+            if isinstance(cur_shp, mp.geom.Block):
+                cur_shp.e1 = mp.Vector3(1,0,0)
+                cur_shp.e2 = mp.Vector3(0,0,1)
+                cur_shp.e3 = mp.Vector3(0,1,0)
+
+            #Is Prism
+            elif isinstance(cur_shp, mp.geom.Prism):
+                for j in range(len(cur_shp.vertices)):
+                    cur_shp.vertices[j] = \
+                        cur_shp.vertices[j].rotate(mp.Vector3(1,0,0), np.pi/2)
+                cur_shp.axis = mp.Vector3(0,1,0)
+
+            #Is Cylinder
+            else:
+                cur_shp.axis = mp.Vector3(0,1,0)
+
+            #Move center to x=original; y=0; z=around 0, but keeping relative to skin [1]
+            cur_shp.center = mp.Vector3(cur_shp.center.x, 0, ycens[i] - ycens[1])
+
+        return edge
 
 ############################################
 ############################################
