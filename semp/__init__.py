@@ -46,6 +46,7 @@ if pkg_home_dir is None:
 results_dir = rf"{os.getenv('HOME')}/Research/Optics_Modeling/Semp_Results"
 ext_data_dir = f"{pkg_home_dir}/External_Data"
 int_data_dir = f"{pkg_home_dir}/Internal_Data"
+tmp_dir = f"{int_data_dir}/tmp"
 
 #####################
 #####   Modules #####

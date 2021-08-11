@@ -34,7 +34,7 @@ def_params_MEEP = {
     'source_offset_z':  0,          # Units: [m], Light source center in z
 
     ### Mask Properties ###
-    'sim_geometry':     'gap',      # Geometry of simulation. Options: [gap, edge, corner, vacuum]
+    'sim_geometry':     'edge',     # Geometry of simulation. Options: [gap, edge, corner, vacuum]
     'wafer_material':   'metal',    # Wafer material
     'skin_material':    'metal',    # Skin and sidewall material
     'wafer_epsilon':    None,       # Complex permittivity of wafer material

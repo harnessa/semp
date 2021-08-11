@@ -48,6 +48,9 @@ class Analyzer(object):
             #Create PROP instance
             self.prop = semp.Propagator(prop_params, is_analysis=True)
 
+        #Shift observation point to align with wafer bottom
+        self.obs_distance += self.prop.msim.wafer_thick/2
+
         #Store data dir
         self.data_dir = self.prop.logger.data_dir
 
@@ -55,6 +58,52 @@ class Analyzer(object):
         if self.do_save:
             if self.save_dir is None:
                 self.save_dir = self.prop.logger.data_dir
+
+        #Initialize plotter
+        self.plotter = semp.analysis.Plotter(self)
+
+############################################
+############################################
+
+############################################
+####	Shared Functions ####
+############################################
+
+    def get_xind(self, obs_x=None):
+
+        #Use default observation x if none supplied
+        if obs_x is None:
+            obs_x = self.obs_distance
+
+        return np.argmin(np.abs(self.xx - 0.5/self.prop.msim.resolution - obs_x))
+
+############################################
+############################################
+
+############################################
+####	Process Data ####
+############################################
+
+    def get_data(self, comp, ind=None, is_bbek=False):
+        #Load data
+        fld = self.load_field(comp, ind=ind)
+        vac = self.load_field(comp, ind=ind, is_vac=True)
+
+        #Normalize by vacuum field
+        fld /= vac
+
+        #Turn subtract 1 if braunbek
+        if is_bbek:
+            fld -= np.heaviside(self.yy, 1)
+
+        return fld
+
+############################################
+############################################
+
+############################################
+####	Load Data ####
+############################################
 
     def load_metadata(self):
 
@@ -78,48 +127,9 @@ class Analyzer(object):
         self.yy = self.yy[self.pnum_y:self.yy.size-self.pnum_y]
         self.zz = self.zz[self.pnum_z:self.zz.size-self.pnum_z]
 
-        #Shift if edge
+        #Shift y to put zero at edge
         if self.prop.msim.sim_geometry == 'edge':
             self.yy += self.prop.msim.geo.edge_y
-
-############################################
-############################################
-
-############################################
-####	Process Data ####
-############################################
-
-    def get_data_slices(self, data_list, obs_x=None, is_bbek=False):
-
-        #Use default observation x if none supplied
-        if obs_x is None:
-            obs_x = self.obs_distance
-
-        #Find index corresponding to observation distance (account for Yee lattice)
-        xind = np.argmin(np.abs(self.xx - 0.5/self.prop.msim.resolution - obs_x))
-
-        #Load data
-        data = []
-        for dn in data_list:
-            #Load data and normalize by vacuum field
-            fld = self.load_field(dn, ind=xind) / \
-                self.load_field(dn, ind=xind, is_vac=True)
-
-            #Turn subtract 1 if braunbek
-            if is_bbek:
-                fld -= np.heaviside(self.yy, 1)
-
-            #Append
-            data.append(fld)
-
-        return data, xind
-
-############################################
-############################################
-
-############################################
-####	Load Data ####
-############################################
 
     def load_field(self, comp, is_vac=False, ind=None):
 
@@ -150,92 +160,48 @@ class Analyzer(object):
         #Extract index slice
         data = data[ind]
 
+        #Add shape to vacuum to divide by fld
+        if is_vac and len(data.shape) != 0:
+            data = data[:,None]
+
         return data
 
 ############################################
 ############################################
 
 ############################################
-####	Normalize Field ####
+####	Plot Analyses ####
 ############################################
 
-    def normalize_fields(self, pkg, is_difference=False):
+    def show_image(self, comp, is_phase=False, is_bbek=False):
 
-        #Save metadata
-        self.fld_comp = pkg['fld_comp']
-        self.drv_comp = pkg['drv_comp']
-
-        #Extract fields
-        fld = pkg['waf_fld'].copy()
-        drv = pkg['waf_drv'].copy()
-        vac = pkg['vac_fld']
-        vdr = pkg['vac_drv']
-
-        #Create difference fields
-        if is_difference:
-
-            #Build geometric shadow
-            shadow = pkg['waf_eps'].copy()
-            shadow[shadow != 1.] = 0.
-
-            #Compress along x-axis (meep-x) to see where there isn't air all the way to the source
-            shadow = shadow.sum(0)
-
-            #Get where in geometric shadow (each pixel = 1, vertically)
-            in_light = shadow == pkg['waf_xx'].shape[0]
-
-            #Subtract out vacuum fields in air
-            fld[..., in_light] -= vac
-            drv[..., in_light] -= vdr
-
-        #Normalize fields
-        if fld.ndim == 3:
-            vac = vac[:,None]
-            vdr = vdr[:,None]
-
-        fld /= vac#[:,None]
-        drv /= vdr#[:,None]
-
-        #Store relevant fields
-        self.fld = fld
-        self.drv = drv
-        self.xx = pkg['waf_xx']
-        self.yy = pkg['waf_yy']
-        self.zz = pkg['waf_zz']
-        self.eps = pkg['waf_eps']
-
-        #Cleanup
-        del pkg, vac, vdr
-
-############################################
-############################################
-
-############################################
-####	Difference Field Analysis ####
-############################################
-
-    def export_difference_field(self):
         #Load data
-        pkg = self.prop.logger.load_propagation_data()
+        data = self.get_data(comp, is_bbek=is_bbek)
 
-        #Normalize data
-        self.normalize_fields(pkg, is_difference=True)
+        #Convert
+        if is_phase:
+            data = np.angle(data)
+        else:
+            data = np.abs(data)
 
-        #Get average field for Braunbek
-        fld = (self.fld + self.drv)/2
+        #Plot
+        return self.plotter.plot_image(data, is_phase=is_phase)
 
-        #Save data
-        if self.do_save:
-            #TODO: This could be redone, but naming is kept to be consistent with BEAKER
-            with h5py.File(f'{self.save_dir}/edge{self.save_ext}.h5', 'w') as f:
-                f.create_dataset('xx', data=self.yy)    #Edge distance
-                f.create_dataset('fld', data=fld)
-                f.create_dataset('wav', data=self.prop.msim.wave)
-                f.create_dataset('zz', data=self.zz)
+    def show_slice(self, comp, is_phase=False, is_bbek=False):
+        #Get index
+        xind = self.get_xind()
 
-        plt.plot(self.yy, np.abs(self.fld))
-        plt.plot(self.yy, np.abs(self.drv))
-        import pdb;pdb.set_trace()
+        #Load data
+        data = self.get_data(comp, ind=xind, is_bbek=is_bbek)
+
+        #Convert
+        if is_phase:
+            data = np.angle(data)
+        else:
+            data = np.abs(data)
+
+        #Plot
+        return self.plotter.plot_slice(data, is_phase=is_phase)
 
 ############################################
 ############################################
@@ -255,7 +221,7 @@ class Analyzer(object):
 ############################################
 
     def clean_up(self):
-        names = ['xx', 'yy', 'zz', 'fld', 'drv']
+        names = ['xx', 'yy', 'zz']
         for nn in names:
             if hasattr(self, nn):
                 delattr(self, nn)

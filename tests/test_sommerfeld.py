@@ -23,7 +23,6 @@ class Test_Sommerfeld(object):
     pml = 4.
     seam_dark = 5.
     seam_lite = 10.
-    obs_x = 0
     resolution = 30
     atol = 0.01
     do_plot = False and semp.mpi_size == 1
@@ -34,22 +33,33 @@ class Test_Sommerfeld(object):
 
     def test_all(self):
 
-        #Run simulations and get analyzer back
-        alz = self.run_sim()
+        #Run simulations (s & p)
+        self.run_sim()
 
-        #Loop through and check with and without braunbek
-        for is_bbek in [False, True][1:]:
+        #Loop through observation distances
+        for obs_x in [0, 1]:
 
-            #Check simulation
-            self.check_simulation(alz, is_bbek)
+            #Get analyzer
+            alz_params = {
+                'base_dir':         f'{semp.tmp_dir}/tests',
+                'session':          'sommer',
+                'obs_distance':     obs_x,
+            }
+            alz = semp.analysis.Analyzer(alz_params)
 
-            #Check analyzer
-            self.check_analyzer(alz, is_bbek)
+            #Loop through and check with and without braunbek
+            for is_bbek in [False, True]:
+
+                #Check simulation
+                self.check_simulation(alz, is_bbek)
+
+                #Check analyzer
+                self.check_analyzer(alz, is_bbek)
 
     def check_simulation(self, alz, is_bbek):
 
         #Find index corresponding to observation distance (account for Yee lattice)
-        xind = np.argmin(np.abs(alz.xx - 0.5/alz.prop.msim.resolution - self.obs_x))
+        xind = np.argmin(np.abs(alz.xx - 0.5/alz.prop.msim.resolution - alz.obs_distance))
 
         #Load and normalize data
         sez = alz.load_field('ez', ind=xind) / alz.load_field('ez', ind=xind, is_vac=True)
@@ -79,9 +89,12 @@ class Test_Sommerfeld(object):
 
     def check_analyzer(self, alz, is_bbek):
 
+        #Get xindex
+        xind = alz.get_xind()
+
         #Load normalized data
-        sdata, xind = alz.get_data_slices(['ez','hz','ey','hy'], obs_x=self.obs_x, \
-            is_bbek=is_bbek)
+        data_list = ['ez','hz','ey','hy']
+        sdata = [alz.get_data(dn, ind=xind, is_bbek=is_bbek) for dn in data_list]
 
         #Compare to sommerfeld
         adata, ddata = self.compare_to_sommerfeld(sdata, xind, alz, is_bbek)
@@ -149,7 +162,11 @@ class Test_Sommerfeld(object):
 
         }
 
-        PROP_params = {'verbose': True, 'session': 'test'}
+        PROP_params = {
+            'verbose':          True,
+            'base_dir':         f'{semp.tmp_dir}/tests',
+            'session':          'sommer',
+        }
 
         #Run simulation
         prop = semp.Propagator(MEEP_params, PROP_params)
@@ -159,11 +176,6 @@ class Test_Sommerfeld(object):
         # if semp.mpi_size > 1:
         #     prop.run_sim()
         #     import sys;sys.exit(0)
-
-        #Get analyzer
-        alz = semp.analysis.Analyzer({'session': 'test'})
-
-        return alz
 
 ############################################
 ############################################

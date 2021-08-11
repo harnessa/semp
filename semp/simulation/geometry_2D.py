@@ -48,7 +48,6 @@ class Geometry_2D(object):
         ## x ##
         self.lx = 2*self.padpmlx + self.wafer_thick
         self.source_x = -self.lx/2. + self.pmlx
-        self.non_pad_sx = self.lx - 2.*self.padpmlx
 
         ## y ##
         if self.is_edge:
@@ -56,10 +55,8 @@ class Geometry_2D(object):
         else:
             self.ly = 2*(self.padpmly + self.seam_dark) + self.gap_width
         self.edge_y = self.ly/2 - (self.padpmly + self.seam_dark)
-        self.non_pad_sy = self.ly - 2.*self.padpmly
 
         ## z ##
-        self.non_pad_sz = 0             #placeholder
         self.lz = 0
 
         ## cell ##
