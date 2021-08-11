@@ -13,6 +13,7 @@ License: Refer to $pkg_home_dir/LICENSE
 import semp
 import numpy as np
 import meep as mp
+import h5py
 
 class Propagator(object):
 
@@ -63,93 +64,98 @@ class Propagator(object):
         if self.is_movie:
             self.run_movie()
         else:
-            self.run_propagation()
+            self.run_to_end()
 
         #Run Closeups
         self.logger.close_up()
 
     def get_epsilon(self):
         sim = self.msim.build_sim()
-        sim.init_fields()
+        sim.init_sim()
         return sim.get_epsilon(self.msim.fcen)
 
 ############################################
 ############################################
 
 ############################################
-####	Propagation Simulation ####
+####	Run to End of Simulation ####
 ############################################
 
-    def run_propagation(self):
+    def run_to_end(self):
 
-        #Run sim in vacuum
-        vac_data = self.run_single_propagation(is_vac=True)
+        #Flag to get metadata
+        get_meta = True
 
-        #Run sim with wafer
-        waf_data = self.run_single_propagation(is_vac=False)
+        #Loop over polarizations
+        for pol in self.msim.polars:
 
-        #Data package
-        data_pkg = {'vac':vac_data, 'waf':waf_data}
+            #Loop over vacuum
+            for is_vac in [True, False]:
 
-        #Save data
-        self.logger.save_propagation_data(data_pkg)
+                #Run sim
+                self.run_single_to_end(pol, is_vac, get_meta)
 
-        #Store data
-        if self.store_results:
-            self.data_pkg = self.logger.convert_data_package(data_pkg)
-        else:
-            #Cleanup
-            del vac_data, waf_data, data_pkg
+            #Turn off flag
+            get_meta = False
 
-    def run_single_propagation(self, is_vac=False):
+    def run_single_to_end(self, pol, is_vac, get_meta):
 
-        #Build simulation
-        sim = self.msim.build_sim(is_vac=is_vac)
+        #Build to simulation
+        sim = self.msim.build_sim(pol=pol, is_vac=is_vac)
+
+        #Set output directory + prefix
+        sim.use_output_directory(self.logger.data_dir)
+        sim.filename_prefix = ['', 'vac'][int(is_vac)]
+
+        #Get fields to output
+        fld_names = {'s':['efield_z','hfield_x','hfield_y'], \
+            'p':['hfield_z','efield_x','efield_y']}[pol]
+        fld_outs = [getattr(mp, f'output_{fn}') for fn in fld_names]
 
         #Run sim
-        sim.run(until=self.msim.run_time)
+        sim.run(mp.at_end(mp.synchronized_magnetic(*fld_outs)), \
+            until=self.msim.run_time)
 
-        #Synchronize magnetic field
-        sim.fields.synchronize_magnetic_fields()
+        #Output times
+        fname = f'{self.logger.data_dir}/{["", "vac-"][int(is_vac)]}times_{pol}'
+        sim.output_times(fname)
 
-        #Get ouput volume
-        vol = self.msim.geo.get_output_volume(is_vac=is_vac)
+        #Get metadata
+        if get_meta:
 
-        #Get field array slice
-        fld = sim.get_array(vol=vol, component=self.msim.src_comp, cmplx=True)
+            #Get dielectric
+            eps = sim.get_array(component=mp.Dielectric)
 
-        #Get derivative field array slice
-        drv = sim.get_array(vol=vol, component=self.msim.drv_comp, cmplx=True)
+            #Get coordinates
+            x,y,z,w = sim.get_array_metadata()
 
-        #Get observation points (don't return w)
-        xx, yy, zz, ww = sim.get_array_metadata(vol=vol)
+            #Get run time
+            run_time = sim.meep_time()
 
-        #Adjust coordinates
-        xx, yy, zz = self.msim.adjust_coordinates(xx, yy, zz)
+            #Save metadata
+            if semp.zero_rank:
 
-        #Get material map (epsilon)
-        eps = sim.get_array(vol=vol, component=mp.Dielectric)
+                #Prefix
+                pre = f"{self.logger.data_dir}/{['', 'vac-'][int(is_vac)]}"
 
-        #Collapse over y/z in vacuum
-        if is_vac:
-            #Double check it is the same
-            if fld.std(1).max() != 0:
-                print('\nVacuum not uniform over Y!\n')
-            fld = fld.mean(1)
-            drv = drv.mean(1)
-            yy = np.mean(yy)
-            zz = np.mean(zz)
+                #Save dielectric
+                with h5py.File(f'{pre}eps.h5', 'w') as f:
+                    f.create_dataset('dielectric', data=eps)
 
-        #Reset sim
+                #Save coordinates
+                with h5py.File(f'{pre}coords.h5', 'w') as f:
+                    f.create_dataset('xx', data=x)
+                    f.create_dataset('yy', data=y)
+                    f.create_dataset('zz', data=z)
+
+                #Save run time
+                np.save(f'{self.logger.data_dir}/time_ext', run_time)
+
+            #Wait
+            semp.mpi_barrier()
+
+        #Reset meep
         sim.reset_meep()
-
-        #Cleanup
-        del sim, ww
-
-        #Build return package
-        ret_pkg = {'fld':fld, 'drv':drv, 'eps':eps, 'xx':xx, 'yy':yy, 'zz':zz}
-
-        return ret_pkg
 
 ############################################
 ############################################

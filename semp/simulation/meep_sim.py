@@ -44,12 +44,6 @@ class Meep_Sim(object):
         #Calculate central frequency and width
         self.fcen = 1./self.wave
 
-        #Polarization (primary and derivative fields)
-        self.src_comp_name = {'s': 'Ez', 'p': 'Hz'}[self.polarization]
-        self.src_comp = getattr(mp, self.src_comp_name)
-        self.drv_comp_name = {'s': 'Hy', 'p': 'Ey'}[self.polarization]
-        self.drv_comp = getattr(mp, self.drv_comp_name)
-
         #Source offset
         self.src_offset = mp.Vector3(y=self.source_offset_y, \
             z=self.source_offset_z) * self.util.m2mu
@@ -90,8 +84,8 @@ class Meep_Sim(object):
         for nme in ['skin_thick', 'wall_thick', 'scallop_depth', 'taper_angle']:
             setattr(self, nme, 0)
 
-        #Infinitely thin = 2/res
-        self.wafer_thick = 2./self.resolution
+        #Infinitely thin wafer
+        self.wafer_thick = min(0.01, 0.5/self.resolution)
 
 ############################################
 ############################################
@@ -127,7 +121,7 @@ class Meep_Sim(object):
 ####	Build Simulation ####
 ############################################
 
-    def build_sim(self, is_vac=False):
+    def build_sim(self, pol='s', is_vac=False):
         """X is aligned with propagation distance, Y is perpendicular to gap/edge,
            Z is parallel to gap/edge"""
 
@@ -138,13 +132,13 @@ class Meep_Sim(object):
         pml_layers = self.get_pml_layers(is_vac)
 
         #Symmetries
-        symmetries = self.get_symmetries(is_vac)
+        symmetries = self.get_symmetries(is_vac, pol)
 
         #Computational cell
         cell_size = self.get_cell_size(is_vac)
 
         #Source
-        sources = self.get_source(is_vac)
+        sources = self.get_source(pol, is_vac)
 
         #Geometry
         geometry = self.get_geometry(is_vac)
@@ -183,7 +177,7 @@ class Meep_Sim(object):
             layers = self.geo.add_pml_layers(layers, BLyz)
         return layers
 
-    def get_symmetries(self, is_vac):
+    def get_symmetries(self, is_vac, pol):
         #Check y symmetry
         if not self.geo.has_y_symm:
             return []
@@ -192,10 +186,10 @@ class Meep_Sim(object):
         if is_vac:
             return []
         else:
-            phs = {'s':1, 'p':-1}[self.polarization]
+            phs = {'s':1, 'p':-1}[pol]
             return [mp.Mirror(mp.Y, phase=phs)]
 
-    def get_source(self, is_vac):
+    def get_source(self, pol, is_vac):
         #Center of source
         src_pt = mp.Vector3(x=self.geo.source_x)
 
@@ -206,8 +200,11 @@ class Meep_Sim(object):
         #Get source functions
         sim_src, amp_func = self.get_source_function()
 
+        #Get source component
+        src_comp = getattr(mp, {'s': 'Ez', 'p': 'Hz'}[pol])
+
         #Build source   #TODO: add gaussian beam source option
-        sources = [mp.Source(sim_src, component=self.src_comp, center=src_pt, \
+        sources = [mp.Source(sim_src, component=src_comp, center=src_pt, \
             size=mp.Vector3(y=src_sze_y, z=src_sze_z), amp_func=amp_func)]
 
         return sources
@@ -250,22 +247,18 @@ class Meep_Sim(object):
 ####	Misc Functions ####
 ############################################
 
-    def adjust_coordinates(self, xx, yy, zz):
-        #Turn into arrays
-        xx, yy, zz = np.atleast_1d(xx),  np.atleast_1d(yy),  np.atleast_1d(zz)
-
-        #Shift y if edge
-        if self.sim_geometry == 'edge':
-            yy += self.gap_width/2
-
-        #Shift x to bottom of wafer
-        xx += self.geo.wafer_thick/2
-
-        #Shift by 1/2 resolution
-        xx -= 1/self.resolution/2
-        yy -= 1/self.resolution/2
-
-        return xx, yy, zz
+    # def adjust_coordinates(self, xx, yy, zz):
+    #     #Shift y if edge
+    #     if self.sim_geometry == 'edge':
+    #         yy += self.gap_width/2
+    #
+    #     #Shift x to bottom of wafer
+    #     # xx -= self.geo.wafer_thick/2
+    #
+    #     #Shift y by 1 resolution
+    #     # yy -= 1/self.resolution
+    #
+    #     return xx, yy, zz
 
 ############################################
 ############################################

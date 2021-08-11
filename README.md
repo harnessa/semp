@@ -6,7 +6,7 @@ Getting started
 ---------------------
 To clone a copy and install: ::
 
-    git clone https://github.com/harnessa/semp.git
+    git clone https://github.com/harnessa/semp
     cd semp
     python setup.py install
 
@@ -21,7 +21,6 @@ You will need:
 - `meep <https://meep.readthedocs.io/>`
 - `numpy <http://www.numpy.org/>`
 - `h5py <http://www.h5py.org>`
-- `matplotlib <https://pypi.org/project/matplotlib/>`
 - `mpi4py <http://mpi4py.scipy.org/>`
 - `pytest <https://pypi.org/project/pytest/>`
 

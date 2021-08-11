@@ -32,38 +32,19 @@ class Logger(object):
 
     def initialize(self):
         self.data_dir = f"{self.prop.base_dir}/{self.prop.session}"
-        self.log_ext = self.get_log_ext()
 
     def start_up(self):
         #Create save directory
-        if self.writeable:
-            self.util.create_directory(self.data_dir)
+        self.util.create_directory(self.data_dir)
         #Start
         self.start_time = time.perf_counter()
-        self.open_log_file()
         self.save_parameters()
         self.print_starting_message()
-        self.log_is_open = True
 
     def close_up(self):
         #Finish
-        if not self.log_is_open:
-            return
         self.end_time = time.perf_counter()
         self.print_finishing_message()
-        self.close_log_file()
-        self.log_is_open = False
-
-############################################
-############################################
-
-############################################
-#####   Properties #####
-############################################
-
-    @property
-    def writeable(self):
-        return self.prop.do_save and semp.zero_rank and not self.prop.is_analysis
 
 ############################################
 ############################################
@@ -72,41 +53,10 @@ class Logger(object):
 #####  File Functions #####
 ############################################
 
-    def filename(self,base_name,file_type,ext=None,data_dir=None):
+    def filename(self,base_name,file_type,data_dir=None):
         if data_dir is None:
             data_dir = self.data_dir
-        if ext is None:
-            ext = self.log_ext
-        return f"{data_dir}/{base_name}{ext}.{file_type}"
-
-    def get_log_ext(self, ext=None, pol=None):
-        if ext is None:
-            ext = self.prop.ext
-        if ext != '':
-            ext = '__' + ext
-        #Add polarization to end of everything
-        if pol is None:
-            pol = self.prop.msim.polarization
-        ext = f'{ext}__{pol}'
-        return ext
-
-    def open_log_file(self):
-        #Return immediately if not writeable
-        if not self.writeable:
-            return
-
-        #Open file and register it to close at exit
-        self.log_file = open(self.filename('logfile','txt'), 'w')
-        atexit.register(self.close_log_file)
-
-    def close_log_file(self):
-        #Return immediately if not writeable
-        if not self.writeable:
-            return
-
-        #Close file if still open
-        if not self.log_file.closed:
-            self.log_file.close()
+        return f"{data_dir}/{base_name}.{file_type}"
 
 ############################################
 ############################################
@@ -136,10 +86,6 @@ class Logger(object):
         if self.prop.verbose:
             print(new_str)
 
-        #Write to log
-        if self.writeable:
-            self.log_file.write(new_str)
-
 ############################################
 ############################################
 
@@ -149,7 +95,7 @@ class Logger(object):
 
     def print_starting_message(self):
         self.write(is_brk=True)
-        self.write(txt=f'Starting SEMP run at: {self.prop.session}/{self.prop.ext} ...',is_time=True,n_strs=3)
+        self.write(txt=f'Starting SEMP run at: {self.prop.session} ...',is_time=True,n_strs=3)
         self.write(is_brk=True)
 
     def print_finishing_message(self):
@@ -168,38 +114,14 @@ class Logger(object):
 ############################################
 
     def save_parameters(self):
-        #Return immediately if not saving or if not zero-rank processor
-        if not self.writeable:
+        #Return immediately if not zero-rank processor
+        if not semp.zero_rank:
             return
 
         #Save user parameters
         pickle.dump(self.prop.params,      open(self.filename('parameters', 'pck'), 'wb'))
         #Save default parameters
         pickle.dump(semp.utils.def_params, open(self.filename('def_params', 'pck'), 'wb'))
-
-    def save_propagation_data(self, in_data):
-        #Let processors catch up
-        semp.mpi_barrier()
-
-        #Return immediately if not saving or if not zero-rank processor
-        if not self.writeable:
-            return
-
-        #Get file name
-        fname = self.filename('results', 'h5')
-
-        #Save data
-        with h5py.File(fname, 'w') as f:
-            #Add metadata
-            f.attrs['fld_comp'] = self.prop.msim.src_comp_name
-            f.attrs['drv_comp'] = self.prop.msim.drv_comp_name
-            #Loop through wafer and vacuum groups
-            for grp in ['vac', 'waf']:
-                #Create group
-                fgrp = f.create_group(grp)
-                #Loop through and save data
-                for k,v in in_data[grp].items():
-                    fgrp.create_dataset(k, data=v)
 
 ############################################
 ############################################
@@ -211,9 +133,8 @@ class Logger(object):
     def load_parameters(self, alz=None):
         #Load from analyzer
         if alz is not None:
-            ext = self.get_log_ext(self, ext=alz.ext, pol=alz.polarization)
-            usr_fname = self.filename(self, 'parameters', 'pck', ext=ext, data_dir=alz.data_dir)
-            def_fname = self.filename(self, 'def_params', 'pck', ext=ext, data_dir=alz.data_dir)
+            usr_fname = self.filename(self, 'parameters', 'pck', data_dir=alz.data_dir)
+            def_fname = self.filename(self, 'def_params', 'pck', data_dir=alz.data_dir)
         else:
             usr_fname = self.filename('parameters', 'pck')
             def_fname = self.filename('def_params', 'pck')
@@ -237,43 +158,6 @@ class Logger(object):
         params = {'MEEP_params':MEEP_params, 'PROP_params':PROP_params }
 
         return params
-
-    def load_propagation_data(self):
-
-        #Get file name
-        fname = self.filename('results', 'h5')
-
-        #Create data package
-        data = {}
-
-        #Save data
-        with h5py.File(fname, 'r') as f:
-            #Metadata
-            data['fld_comp'] = f.attrs['fld_comp']
-            data['drv_comp'] = f.attrs['drv_comp']
-            #Loop through groups
-            for grp in ['vac', 'waf']:
-                #Loop through and store data
-                for k, v in f[grp].items():
-                    data[f'{grp}_{k}'] = v[()]
-
-        return data
-
-    def convert_data_package(self, in_data):
-        #Create data package
-        data = {}
-
-        #Metadata
-        data['fld_comp'] = self.prop.msim.src_comp_name
-        data['drv_comp'] = self.prop.msim.drv_comp_name
-
-        #Loop through groups
-        for grp in ['vac', 'waf']:
-            #Loop through and store data
-            for k, v in in_data[grp].items():
-                data[f'{grp}_{k}'] = v
-
-        return data
 
 ############################################
 ############################################

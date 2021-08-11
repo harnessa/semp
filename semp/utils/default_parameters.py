@@ -26,8 +26,7 @@ base_dir = rf"{semp.pkg_home_dir}/Results"
 def_params_MEEP = {
 
     ### Lab Properties  ###
-    'obs_distance':     0.,         # Distance from wafer bottom to near field.
-    'polarization':     's',        # Polarization. Options:'s'-skipping, 'p'-plunging
+    'polars':           ['s','p'],  # Polarization. Options:'s'-skipping, 'p'-plunging
     'wave':             0.5,        # Central wavelength.
     'is_diverging':     False,      # Diverging light source
     'source_distance':  27.5,       # Units: [m], Light source distance for diverging beam
@@ -45,6 +44,8 @@ def_params_MEEP = {
     'skin_thick':       0.,         # Skin thickness [um]
     'wall_thick':       0.,         # Sidewall thickness [um]
     'gap_width':        5.,         # Width of gap (also w/ edge) [um]
+    'seam_dark':        5.,         # Width of seam on dark side (wafer) [um]
+    'seam_lite':        5.,         # Width of seam on light side (vacuum) [um]
     'scallop_height':   0.,         # Height or distance between scallops [um]
     'scallop_depth':    0.,         # Depth of scallops (>0 turns on scallops) [um]
     'taper_angle':      0,          # Angle to taper edge [deg]
@@ -54,7 +55,7 @@ def_params_MEEP = {
 
     ### Numerics ###
     'resolution':       30,         # [pixels / um]
-    'use_absorber':     False,      # Use absorber instead of PML
+    'use_absorber':     True,       # Use absorber instead of PML
     'pmlx':             2.,         # Size of PML in X [um]
     'pmly':             2.,         # Size of PML in Y [um]
     'pmlz':             2.,         # Size of PML in Z [um]
@@ -84,13 +85,8 @@ def_params_PROP = {
     ### Saving ###
     'base_dir':         semp.results_dir,       # Directory base
     'session':          '',         # Session: save under 'base_dir/session'
-    'ext':              '',         # Extension to append to end of each file
-    'do_save':          False,      # Save data?
     'verbose':          True,       # Print statements?
-    'store_results':    False,      # Store results
 
-    ### Output ###
-    'output_full_dim':  False,      # Output full dimension? (i.e., plane for 2D, volume for 3D)
 }
 
 ##############################################
@@ -105,12 +101,12 @@ def_params_ANLZ = {
     ### Saving ###
     'do_save':          False,      # Save analysis results?
     'save_dir':         None,       # If None, save to load dir
-    'save_ext':         None,       # Save analysis extension
+    'save_ext':         '',         # Save analysis extension
     ### Loading ###
     'base_dir':         semp.results_dir,       # Directory base
     'session':          '',         # Session: load from 'base_dir/session'
-    'ext':              '',         # Extension to append to end of each file
-    'polarization':     's',        # Polarization. Options:'s'-skipping, 'p'-plunging
+    ### Analyzing ###
+    'obs_distance':     0.,         # Distance from wafer bottom to near field.
 }
 
 ##############################################

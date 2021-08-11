@@ -30,6 +30,9 @@ class Geometry_2D(object):
         for k in semp.utils.def_params['MEEP_params'].keys():
             setattr(self, k, getattr(self.parent, k))
 
+        #Is edge?
+        self.is_edge = self.sim_geometry == 'edge'
+
         #Distance Properties
         self.set_distance_properties()
 
@@ -37,51 +40,30 @@ class Geometry_2D(object):
         #Dimensions
         self.ndims = 2
 
-        ## cell size ##
-        self.lx = self.pmlx + self.padx + self.wafer_thick + self.padx + self.pmlx
-        self.ly = self.pmly + self.pady + self.gap_width   + self.pady + self.pmly
-        self.lz = 0
-        self.cell_size = mp.Vector3(self.lx, self.ly, self.lz)
+        #Combine pml and pad
+        self.padpmlx = self.padx + self.pmlx
+        self.padpmly = self.pady + self.pmly
+        self.padpmlz = self.padz + self.pmlz
 
         ## x ##
+        self.lx = 2*self.padpmlx + self.wafer_thick
         self.source_x = -self.lx/2. + self.pmlx
-        self.obs_pt_x = self.wafer_thick/2. + self.obs_distance - 1./self.resolution
-        self.non_pml_sx = self.lx - 2.*self.pmlx
+        self.non_pad_sx = self.lx - 2.*self.padpmlx
 
         ## y ##
-        self.non_pml_sy = self.ly - 2.*self.pmly
+        if self.is_edge:
+            self.ly = 2*self.padpmly + self.seam_dark + self.seam_lite
+        else:
+            self.ly = 2*(self.padpmly + self.seam_dark) + self.gap_width
+        self.edge_y = self.ly/2 - (self.padpmly + self.seam_dark)
+        self.non_pad_sy = self.ly - 2.*self.padpmly
 
         ## z ##
-        self.non_pml_sz = 0             #placeholder
+        self.non_pad_sz = 0             #placeholder
+        self.lz = 0
 
-############################################
-############################################
-
-############################################
-####	Output Volume (shared 2D/3D)####
-############################################
-
-    def get_output_volume(self, is_vac=False):
-        #X sze/cen depending on output_full_dim
-        if self.parent.prop.output_full_dim:
-            cen = mp.Vector3()
-            x_sze = self.non_pml_sx
-        else:
-            cen = mp.Vector3(x=self.obs_pt_x)
-            x_sze = 1/self.resolution
-
-        #YZ sze depending on is_vac
-        if is_vac:
-            y_sze, z_sze = 1/self.resolution, 1/self.resolution
-        else:
-            y_sze, z_sze = self.non_pml_sy, self.non_pml_sz
-
-        sze = mp.Vector3(x=x_sze, y=y_sze, z=z_sze)
-
-        #Volume
-        vol = mp.Volume(center=cen, size=sze, dims=self.ndims)
-
-        return vol
+        ## cell ##
+        self.cell_size = mp.Vector3(self.lx, self.ly, self.lz)
 
 ############################################
 ############################################
@@ -95,11 +77,16 @@ class Geometry_2D(object):
         #Symmetry is broken by offset source
         src_symm = self.parent.src_offset.norm() == 0
         #Symmetry is broken by edge
-        edg_symm = self.sim_geometry != 'edge'
+        edg_symm = not self.is_edge
         return src_symm and edg_symm
 
     def add_pml_layers(self, layers, BLyz):
-        layers += [BLyz(thickness=self.pmly, direction=mp.Y)]
+        #For Edge, only add to side opposite edge
+        if self.is_edge:
+            layers += [BLyz(thickness=self.pmly, direction=mp.Y, side=-1)]
+        else:
+            layers += [BLyz(thickness=self.pmly, direction=mp.Y)]
+
         return layers
 
     def get_src_amp_func(self, kk):
@@ -121,10 +108,6 @@ class Geometry_2D(object):
             #Build edge and flip coordinates
             geometry += self.flip_edge_y(self.build_edge())
 
-        #Shift by 1 resolution element
-        geometry = self.shift_edge(geometry, 'x', -1/self.resolution)
-        geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
-
         return geometry
 
     def build_edge(self, y0=None, y1=None, zdepth=mp.inf):
@@ -139,7 +122,7 @@ class Geometry_2D(object):
         if y0 is None:
             y0 = self.ly/2.
         if y1 is None:
-            y1 = self.gap_width/2.
+            y1 = self.edge_y
 
         #Wafer
         ex = self.wafer_thick/2.
