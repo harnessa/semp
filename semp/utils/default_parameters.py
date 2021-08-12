@@ -86,7 +86,7 @@ def_params_PROP = {
     'base_dir':         semp.results_dir,       # Directory base
     'session':          '',         # Session: save under 'base_dir/session'
     'verbose':          True,       # Print statements?
-
+    'save_all':         True,
 }
 
 ##############################################

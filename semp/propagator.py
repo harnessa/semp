@@ -109,8 +109,13 @@ class Propagator(object):
         sim.filename_prefix = ['', 'vac'][int(is_vac)]
 
         #Get fields to output
-        fld_names = {'s':['efield_z','hfield_x','hfield_y'], \
-            'p':['hfield_z','efield_x','efield_y']}[pol]
+        if self.save_all:
+            fld_names = {'s':['efield_z','hfield_x','hfield_y'], \
+                'p':['hfield_z','efield_x','efield_y']}[pol]
+        else:
+            fld_names = {'s':['efield_z','hfield_y'], \
+                'p':['hfield_z','efield_y']}[pol]
+
         fld_outs = [getattr(mp, f'output_{fn}') for fn in fld_names]
 
         #Run sim
