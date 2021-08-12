@@ -144,7 +144,7 @@ class Meep_Sim(object):
         geometry = self.get_geometry(is_vac)
 
         #Build simulation
-        sim = mp.Simulation(split_chunks_evenly=True, force_complex_fields=True,
+        sim = mp.Simulation(split_chunks_evenly=False, force_complex_fields=True,
             ensure_periodicity=False, resolution=self.resolution, Courant=self.courant,
             cell_size=cell_size, boundary_layers=pml_layers, sources=sources,
             geometry=geometry, symmetries=symmetries, k_point=k_point)

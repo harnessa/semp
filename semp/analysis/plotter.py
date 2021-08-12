@@ -65,6 +65,38 @@ class Plotter(object):
 ############################################
 
 ############################################
+####	Epsilon Plot ####
+############################################
+
+    def plot_epsilon(self, data):
+
+        fig, axes = plt.subplots(1, figsize=(6,6))
+
+        #Get image extent
+        extent = [self.alz.yy[-1], self.alz.yy[0], self.alz.xx[-1], self.alz.xx[0]]
+        #Adjust for yee lattice
+        extent = [x + 0.5/self.msim.resolution for x in extent]
+
+        #Show image
+        out = axes.imshow(data, extent=extent, interpolation='none',
+            vmin=0, vmax=data[data < 1e3].max())
+
+        #Add substrate
+        self.draw_substrate(axes)
+
+        #Labels
+        axes.set_xlabel('Y [microns]')
+        axes.set_ylabel('X [microns]')
+
+        axes.set_xlim([5.4,4.7])
+        axes.set_ylim([-0.7,-1.4])
+        breakpoint()
+        return axes
+
+############################################
+############################################
+
+############################################
 ####	Slice Plot ####
 ############################################
 
@@ -116,9 +148,6 @@ class Plotter(object):
                 [wy,     wx/2]
             ])
             self.overplot_eps_box(skn_box,axes,col='m')
-
-        #Observation line
-        axes.axhline(self.alz.obs_distance, color='g', linestyle='--')
 
     def add_box(self, cnrs, axes, col='r'):
         #Loop over corners and plot lines in between

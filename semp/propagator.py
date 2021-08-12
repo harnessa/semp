@@ -69,9 +69,10 @@ class Propagator(object):
         #Run Closeups
         self.logger.close_up()
 
-    def get_epsilon(self):
-        sim = self.msim.build_sim()
-        sim.init_sim()
+    def get_epsilon(self, sim=None):
+        if sim is None:
+            sim = self.msim.build_sim()
+            sim.init_sim()
         return sim.get_epsilon(self.msim.fcen)
 
 ############################################

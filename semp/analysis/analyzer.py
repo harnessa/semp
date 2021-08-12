@@ -11,20 +11,24 @@ License: Refer to $pkg_home_dir/LICENSE
 """
 
 import semp
+import meep as mp
 import numpy as np
 import matplotlib.pyplot as plt;plt.ion()
 import h5py
 
 class Analyzer(object):
 
-    def __init__(self, params, prop=None):
+    def __init__(self, params, prop=None, build_geo=False):
         self.util = semp.utils.Utilities()
 
         #Initialize
         self.initialize(params, prop=prop)
 
         #Get meta data
-        self.load_metadata()
+        if build_geo:
+            self.build_geo()
+        else:
+            self.load_metadata()
 
 ############################################
 ####	Initialization ####
@@ -117,6 +121,15 @@ class Analyzer(object):
                 for c in ['xx','yy','zz']:
                     setattr(self, f"{['','vac_'][int(is_vac)]}{c}", f[c][()])
 
+        #Trim PML
+        self.trim_pml()
+
+    def trim_pml(self):
+        #Exit if this has been done before
+        if abs(self.yy.size - self.prop.msim.geo.ly * self.prop.msim.resolution) > 2:
+            print('\nPML Already Trimmed!\n')
+            return
+
         #Store pml size (with pad for y)
         self.pnum_x = int(self.prop.msim.geo.pmlx * self.prop.msim.resolution)
         self.pnum_y = int(self.prop.msim.geo.padpmly * self.prop.msim.resolution)
@@ -170,6 +183,65 @@ class Analyzer(object):
 ############################################
 
 ############################################
+####	Build Geometry ####
+############################################
+
+    def build_geo(self):
+
+        #Build sim
+        sim = self.prop.msim.build_sim()
+        sim.init_sim()
+
+        #Get dielectric
+        self.eps = np.abs(sim.get_epsilon(self.prop.msim.fcen))
+
+        plt.imshow(self.eps,vmax=25,interpolation='none')
+        breakpoint()
+
+        #Get coordinates
+        self.xx, self.yy, self.zz, w = sim.get_array_metadata()
+
+        #Trim pml
+        self.trim_pml()
+        sx, sy = self.eps.shape
+        self.eps = self.eps[self.pnum_x:sx-self.pnum_x, self.pnum_y:sy-self.pnum_y]
+
+############################################
+############################################
+
+############################################
+####	Collect Braunbek ####
+############################################
+
+    def collect_braunbek(self):
+
+        #Get xind at bottom of wafer
+        xind = self.get_xind(self.prop.msim.wafer_thick/2)
+
+        #Data to collect [[s-fld, s-drv], [p-fld, p-drv]]
+        data_names = [['ez', 'hy'], ['hz', 'ey']]
+
+        #Loop through polarizations
+        data = []
+        for data_list in data_names:
+
+            #Get data
+            fld = self.get_data(data_list[0], ind=xind, is_bbek=True)
+            drv = self.get_data(data_list[1], ind=xind, is_bbek=True)
+
+            #Combine fields for Braunbek difference field
+            avg = (fld + drv) / 2
+
+            #Append
+            data.append(avg)
+
+        #Return s, p, yy (called x in diffraq)
+        return *data, self.yy
+
+############################################
+############################################
+
+############################################
 ####	Plot Analyses ####
 ############################################
 
@@ -202,6 +274,15 @@ class Analyzer(object):
 
         #Plot
         return self.plotter.plot_slice(data, is_phase=is_phase)
+
+    def show_epsilon(self):
+
+        #Check if epsilon already exists
+        if not hasattr(self, 'eps'):
+            self.build_geo()
+
+        #Plot
+        return self.plotter.plot_epsilon(self.eps)
 
 ############################################
 ############################################

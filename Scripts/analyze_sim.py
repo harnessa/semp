@@ -6,7 +6,7 @@ Affiliation: Princeton University
 Created on: 08-11-2021
 Package: SEMP
 
-Description: Run SEMP simulation
+Description: Analyze SEMP simulation
 License: Refer to $pkg_home_dir/LICENSE
 """
 

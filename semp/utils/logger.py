@@ -35,7 +35,8 @@ class Logger(object):
 
     def start_up(self):
         #Create save directory
-        self.util.create_directory(self.data_dir)
+        if semp.zero_rank and not self.prop.is_analysis:
+            self.util.create_directory(self.data_dir)
         #Start
         self.start_time = time.perf_counter()
         self.save_parameters()
