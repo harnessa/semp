@@ -68,7 +68,7 @@ class Plotter(object):
 ####	Epsilon Plot ####
 ############################################
 
-    def plot_epsilon(self, data):
+    def plot_epsilon(self, data, with_lines=True):
 
         fig, axes = plt.subplots(1, figsize=(6,6))
 
@@ -82,15 +82,13 @@ class Plotter(object):
             vmin=0, vmax=data[data < 1e3].max())
 
         #Add substrate
-        self.draw_substrate(axes)
+        if with_lines:
+            self.draw_substrate(axes)
 
         #Labels
         axes.set_xlabel('Y [microns]')
         axes.set_ylabel('X [microns]')
 
-        axes.set_xlim([5.4,4.7])
-        axes.set_ylim([-0.7,-1.4])
-        breakpoint()
         return axes
 
 ############################################

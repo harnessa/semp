@@ -105,6 +105,7 @@ def_params_ANLZ = {
     ### Loading ###
     'base_dir':         semp.results_dir,       # Directory base
     'session':          '',         # Session: load from 'base_dir/session'
+    'time_ext':         None,
     ### Analyzing ###
     'obs_distance':     0.,         # Distance from wafer bottom to near field.
 }

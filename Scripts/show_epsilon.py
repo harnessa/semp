@@ -29,8 +29,12 @@ MEEP_params = {
     'wafer_thick':      2,
     'skin_thick':       0.25,
 
+    'scallop_height':   0.8,
+    'scallop_depth':    0.8,
+    'taper_angle':      0,
+
     ### Numerics ###
-    'resolution':       30,
+    'resolution':       50,
     'pml_all':          4,
     'pad_all':          4,
 
@@ -41,6 +45,6 @@ prop = semp.Propagator(MEEP_params, {'verbose':False}, is_analysis=True)
 alz = semp.analysis.Analyzer({}, prop=prop, build_geo=True)
 
 #Show epsilon
-alz.show_epsilon()
+alz.show_epsilon(with_lines=False)
 
 breakpoint()

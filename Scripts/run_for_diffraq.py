@@ -14,19 +14,23 @@ import numpy as np
 import semp
 
 
-base_dir = 'Si_2'
+base_dir = 'comp_M12P3'
 
-seam_dark = 5
-seam_lite = 10
+resolution = 50
 
 wafer_thick = 2
+skin_metal = 'Al'
 skin_thick = 0.25
-skin_metal = 'metal'
 
-resolution = 30
-n_periods = 50
+scallop_height = 0.8
+scallop_depth  = 0.225
+taper_angle = 5
 
-waves = [0.641, 0.660, 0.699, 0.725]
+seam_dark = 10
+seam_lite = 20
+n_periods = 150
+
+waves = [0.641, 0.660, 0.699, 0.725][:1]
 
 ######################################
 
@@ -46,6 +50,10 @@ MEEP_params = {
     'wafer_thick':      wafer_thick,
     'skin_thick':       skin_thick,
 
+    'scallop_height':   scallop_height,
+    'scallop_depth':    scallop_depth,
+    'taper_angle':      taper_angle,
+
     ### Numerics ###
     'resolution':       resolution,
     'pml_all':          4,
@@ -63,7 +71,7 @@ for wv in waves:
 
     #Add wavelength to parameters
     MEEP_params['wave'] = wv
-    PROP_params['session'] = f'{base_dir}/{wv*1e3:.0f}_nm'
+    PROP_params['session'] = f'{base_dir}/{wv*1e3:.0f}nm'
 
     #Run simulation
     prop = semp.Propagator(MEEP_params, PROP_params)

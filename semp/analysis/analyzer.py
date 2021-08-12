@@ -55,9 +55,6 @@ class Analyzer(object):
         #Shift observation point to align with wafer bottom
         self.obs_distance += self.prop.msim.wafer_thick/2
 
-        #Store data dir
-        self.data_dir = self.prop.logger.data_dir
-
         #Save directory
         if self.do_save:
             if self.save_dir is None:
@@ -112,12 +109,19 @@ class Analyzer(object):
     def load_metadata(self):
 
         #Get time extension for filenames
-        time_ext = float(np.load(f'{self.data_dir}/time_ext.npy'))
-        self.time_ext = f"-{time_ext:09.2f}"
+        if self.time_ext is None:
+            time_ext = float(np.load(f'{self.data_dir}/time_ext.npy'))
+            self.time_ext = f"-{time_ext:09.2f}"
+        else:
+            self.time_ext = '-' + self.time_ext
 
         #Load coordinates
         for is_vac in [True, False]:
-            with h5py.File(f"{self.data_dir}/{['','vac-'][int(is_vac)]}coords.h5", 'r') as f:
+
+            #Prefix
+            pre = ['','vac-'][int(is_vac)]
+
+            with h5py.File(f"{self.data_dir}/{pre}coords{self.time_ext}.h5", 'r') as f:
                 for c in ['xx','yy','zz']:
                     setattr(self, f"{['','vac_'][int(is_vac)]}{c}", f[c][()])
 
@@ -128,6 +132,7 @@ class Analyzer(object):
         #Exit if this has been done before
         if abs(self.yy.size - self.prop.msim.geo.ly * self.prop.msim.resolution) > 2:
             print('\nPML Already Trimmed!\n')
+            breakpoint()
             return
 
         #Store pml size (with pad for y)
@@ -194,9 +199,6 @@ class Analyzer(object):
 
         #Get dielectric
         self.eps = np.abs(sim.get_epsilon(self.prop.msim.fcen))
-
-        plt.imshow(self.eps,vmax=25,interpolation='none')
-        breakpoint()
 
         #Get coordinates
         self.xx, self.yy, self.zz, w = sim.get_array_metadata()
@@ -275,14 +277,14 @@ class Analyzer(object):
         #Plot
         return self.plotter.plot_slice(data, is_phase=is_phase)
 
-    def show_epsilon(self):
+    def show_epsilon(self, with_lines=True):
 
         #Check if epsilon already exists
         if not hasattr(self, 'eps'):
             self.build_geo()
 
         #Plot
-        return self.plotter.plot_epsilon(self.eps)
+        return self.plotter.plot_epsilon(self.eps, with_lines=with_lines)
 
 ############################################
 ############################################

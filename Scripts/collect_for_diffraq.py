@@ -27,7 +27,7 @@ data = []
 for wv in waves:
 
     params = {
-        'session':      f'{base_dir}/{wv:.0f}_nm'
+        'session':      f'{base_dir}/{wv:.0f}nm'
     }
 
     #Load analyzer

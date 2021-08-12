@@ -138,13 +138,14 @@ class Propagator(object):
 
                 #Prefix
                 pre = f"{self.logger.data_dir}/{['', 'vac-'][int(is_vac)]}"
+                pst = f"-{run_time:09.2f}"
 
                 #Save dielectric
-                with h5py.File(f'{pre}eps.h5', 'w') as f:
+                with h5py.File(f'{pre}eps{pst}.h5', 'w') as f:
                     f.create_dataset('dielectric', data=eps)
 
                 #Save coordinates
-                with h5py.File(f'{pre}coords.h5', 'w') as f:
+                with h5py.File(f'{pre}coords{pst}.h5', 'w') as f:
                     f.create_dataset('xx', data=x)
                     f.create_dataset('yy', data=y)
                     f.create_dataset('zz', data=z)
