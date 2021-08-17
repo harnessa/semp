@@ -21,22 +21,23 @@ MEEP_params = {
 
     ### Mask Properties ###
     'sim_geometry':     'edge',
-    'seam_dark':        5,
-    'seam_lite':        10,
+    'seam_dark':        2,
+    'seam_lite':        2,
 
     'wafer_material':   'cSi',
     'skin_material':    'metal',
     'wafer_thick':      2,
     'skin_thick':       0.25,
 
-    'scallop_height':   0.8,
-    'scallop_depth':    0.8,
+    'scallop_height':   0.6,
+    'scallop_depth':    0.1,
+    'scallop_start':    0.5,
     'taper_angle':      0,
 
     ### Numerics ###
     'resolution':       50,
-    'pml_all':          4,
-    'pad_all':          4,
+    'pml_all':          1,
+    'pad_all':          1,
 
 }
 
@@ -45,6 +46,6 @@ prop = semp.Propagator(MEEP_params, {'verbose':False}, is_analysis=True)
 alz = semp.analysis.Analyzer({}, prop=prop, build_geo=True)
 
 #Show epsilon
-alz.show_epsilon(with_lines=False)
+axes = alz.show_epsilon(with_lines=False)
 
 breakpoint()

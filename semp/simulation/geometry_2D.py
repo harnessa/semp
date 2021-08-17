@@ -152,28 +152,22 @@ class Geometry_2D(object):
 
         #Scallops
         if self.scallop_depth > 0:
-            # Cylinder height start (gap width if end block, infinite for edges)
-            cyl_hgt_0 = zdepth - 2*(self.pmly + self.pady)
-            #Radius (from height) + Horizontal offset (from depth)
-            Rs = self.scallop_height/2.
-            ys = Rs - self.scallop_depth
             #Number of scallops
-            n_scls = int(self.wafer_thick / (2*Rs)) + 1
+            n_scls = int(self.wafer_thick / self.scallop_height) + 1
             #Starting vertical center point
-            xs0 = -self.wafer_thick/2. + Rs
+            xs0 = -self.wafer_thick/2 + self.scallop_height/2 + self.scallop_start
+            #Scallop size
+            scl_sze = mp.Vector3(x=self.scallop_height, y=2*self.scallop_depth, z=zdepth)
+            #Loop through and add scallops
             for i in range(n_scls):
                 #Get new horizontal center point (accounting for taper angle)
                 ys0 = -y1 - (xs0 + self.wafer_thick/2) * \
                     np.tan(np.radians(self.taper_angle))
-                #Get cylinder height (accounting for taper angle)
-                cyl_hgt = cyl_hgt_0 + 2*(xs0 + self.wafer_thick/2) * \
-                    np.tan(np.radians(self.taper_angle))
-                #Add cylinders
-                scl_cen = mp.Vector3(x=xs0, y=ys0 + ys)
-                geometry += [mp.Cylinder(material=mp.air, radius=Rs, \
-                    height=cyl_hgt, center=scl_cen)]
+                #Add ellipsoids
+                scl_cen = mp.Vector3(x=xs0, y=ys0)
+                geometry += [mp.Ellipsoid(material=mp.air, size=scl_sze, center=scl_cen)]
                 #Step down to next cylinder's position
-                xs0 += 2*Rs
+                xs0 += self.scallop_height
 
         return geometry
 

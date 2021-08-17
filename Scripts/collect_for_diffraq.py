@@ -14,11 +14,11 @@ import numpy as np
 import semp
 import h5py
 
-base_dir = 'Si_2'
-waves = [641, 660, 699, 725]
+base_dir = 'comp_M12P3'
+waves = [641, 660, 699, 725][:1]
 
 do_save = [False, True][1]
-mask = 'MTEST'
+mask = 'M12P3'
 save_dir = './'
 save_ext = ''
 
