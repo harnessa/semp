@@ -33,9 +33,12 @@ class Plotter(object):
 ####	Image Plot ####
 ############################################
 
-    def plot_image(self, data, is_phase=False):
+    def plot_image(self, data, is_phase=False, title=''):
 
-        fig, axes = plt.subplots(1, figsize=(6,6))
+        sx = data.shape[1]/max(data.shape) * 10
+        sy = data.shape[0]/max(data.shape) * 10
+
+        fig, axes = plt.subplots(1, figsize=(sx,sy))
 
         #Get image extent
         extent = [self.alz.yy[-1], self.alz.yy[0], self.alz.xx[-1], self.alz.xx[0]]
@@ -58,6 +61,7 @@ class Plotter(object):
         #Labels
         axes.set_xlabel('Y [microns]')
         axes.set_ylabel('X [microns]')
+        axes.set_title(title)
 
         return axes
 
@@ -103,7 +107,7 @@ class Plotter(object):
         fig, axes = plt.subplots(1, figsize=(6,6))
 
         #Plot
-        axes.plot(self.alz.yy, data)
+        axes.plot(self.alz.yy, data, '-')
         axes.axvline(0, color='k', linestyle=':')
 
         #Labels

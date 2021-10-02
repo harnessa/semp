@@ -169,6 +169,13 @@ class Geometry_2D(object):
                 #Step down to next cylinder's position
                 xs0 += self.scallop_height
 
+        #Footing
+        if self.footing_size is not None:
+            fsze = mp.Vector3(x=self.footing_size[0], y=self.footing_size[1], z=zdepth)
+            ys0 = -y1 - self.wafer_thick/2*np.tan(np.radians(self.taper_angle))
+            fcen = mp.Vector3(x=self.wafer_thick/2, y=ys0)
+            geometry += [mp.Ellipsoid(material=mp.air, size=fsze, center=fcen)]
+
         return geometry
 
 ############################################

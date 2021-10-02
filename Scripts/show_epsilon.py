@@ -12,7 +12,7 @@ License: Refer to $pkg_home_dir/LICENSE
 
 import numpy as np
 import semp
-import matplotlib.pyplot as plt;plt.ion()
+# import matplotlib.pyplot as plt;plt.ion()
 
 MEEP_params = {
 
@@ -26,13 +26,14 @@ MEEP_params = {
 
     'wafer_material':   'cSi',
     'skin_material':    'metal',
-    'wafer_thick':      2,
+    'wafer_thick':      1.,
     'skin_thick':       0.25,
 
     'scallop_height':   0.6,
     'scallop_depth':    0.1,
-    'scallop_start':    0.5,
-    'taper_angle':      0,
+    'scallop_start':    0.,
+    'taper_angle':      4,
+    # 'footing_size':     [0.2, 0.5],
 
     ### Numerics ###
     'resolution':       50,

@@ -16,16 +16,16 @@ import semp
 #Meep parameters
 MEEP_params = {
     ### Lab Properties  ###
-    'polars':           ['s', 'p'],
+    'polars':           ['s', 'p'][:1],
     'wave':             0.641,
 
     ### Mask Properties ###
-    'sim_geometry':     'edge',
+    'sim_geometry':     'gap',
     'seam_dark':        5,
     'seam_lite':        10,
-    # 'is_sommerfeld':    True,
+    'is_sommerfeld':    True,
 
-    'wafer_material':   'cSi',
+    'wafer_material':   'metal',
     'skin_material':    'metal',
     'wafer_thick':      2,
     'skin_thick':       0.25,
@@ -41,7 +41,7 @@ MEEP_params = {
 #Main parameters
 PROP_params = {
     # 'session': 'sommer'
-    'session': 'Si_2'
+    'session': 'test3'
 }
 
 #Run simulation

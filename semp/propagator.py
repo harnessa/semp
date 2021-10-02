@@ -161,6 +161,9 @@ class Propagator(object):
             #Wait
             semp.mpi_barrier()
 
+            #Cleanup
+            del eps, x, y, z
+
         #Reset meep
         sim.reset_meep()
 

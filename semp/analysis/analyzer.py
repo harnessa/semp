@@ -15,6 +15,7 @@ import meep as mp
 import numpy as np
 import matplotlib.pyplot as plt;plt.ion()
 import h5py
+import glob
 
 class Analyzer(object):
 
@@ -91,7 +92,8 @@ class Analyzer(object):
         vac = self.load_field(comp, ind=ind, is_vac=True)
 
         #Normalize by vacuum field
-        fld /= vac
+        if not np.allclose(np.abs(vac),0):
+            fld /= vac
 
         #Turn subtract 1 if braunbek
         if is_bbek:
@@ -111,9 +113,12 @@ class Analyzer(object):
         #Get time extension for filenames
         if self.time_ext is None:
             time_ext = float(np.load(f'{self.data_dir}/time_ext.npy'))
-            self.time_ext = f"-{time_ext:09.2f}"
+            self.meta_time_ext = f"-{time_ext:09.2f}"
+            self.data_time_ext = glob.glob(f'{self.data_dir}/ez-*.h5')[0] \
+                .split('/')[-1].split('ez')[-1].split('.h5')[0]
         else:
-            self.time_ext = '-' + self.time_ext
+            self.meta_time_ext = '-' + self.time_ext
+            self.data_time_ext = '-' + self.time_ext
 
         #Load coordinates
         for is_vac in [True, False]:
@@ -121,7 +126,7 @@ class Analyzer(object):
             #Prefix
             pre = ['','vac-'][int(is_vac)]
 
-            with h5py.File(f"{self.data_dir}/{pre}coords{self.time_ext}.h5", 'r') as f:
+            with h5py.File(f"{self.data_dir}/{pre}coords{self.meta_time_ext}.h5", 'r') as f:
                 for c in ['xx','yy','zz']:
                     setattr(self, f"{['','vac_'][int(is_vac)]}{c}", f[c][()])
 
@@ -129,16 +134,17 @@ class Analyzer(object):
         self.trim_pml()
 
     def trim_pml(self):
-        #Exit if this has been done before
-        if abs(self.yy.size - self.prop.msim.geo.ly * self.prop.msim.resolution) > 2:
-            print('\nPML Already Trimmed!\n')
-            breakpoint()
-            return
 
         #Store pml size (with pad for y)
         self.pnum_x = int(self.prop.msim.geo.pmlx * self.prop.msim.resolution)
         self.pnum_y = int(self.prop.msim.geo.padpmly * self.prop.msim.resolution)
         self.pnum_z = int(self.prop.msim.geo.pmlz * self.prop.msim.resolution)
+
+        #Exit if this has been done before
+        if abs(self.yy.size - self.prop.msim.geo.ly * self.prop.msim.resolution) > 2:
+            print('\nPML Already Trimmed!\n')
+            # breakpoint()
+            return
 
         #Trim pml
         self.xx = self.xx[self.pnum_x:self.xx.size-self.pnum_x]
@@ -162,7 +168,7 @@ class Analyzer(object):
         vac_ext = ['', 'vac-'][int(is_vac)]
 
         #Filename
-        fname = self.data_dir + '/' + vac_ext + comp + self.time_ext + ".h5"
+        fname = self.data_dir + '/' + vac_ext + comp + self.data_time_ext + ".h5"
 
         #Load data (without pml) - ugly index is due to slow fancy indexing in h5py
         with h5py.File(fname, 'r') as f:
@@ -238,7 +244,7 @@ class Analyzer(object):
             data.append(avg)
 
         #Return s, p, yy (called x in diffraq)
-        return *data, self.yy
+        return data[0], data[1], self.yy
 
 ############################################
 ############################################
@@ -259,7 +265,7 @@ class Analyzer(object):
             data = np.abs(data)
 
         #Plot
-        return self.plotter.plot_image(data, is_phase=is_phase)
+        return self.plotter.plot_image(data, is_phase=is_phase, title=comp)
 
     def show_slice(self, comp, is_phase=False, is_bbek=False):
         #Get index

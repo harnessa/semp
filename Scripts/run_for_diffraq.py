@@ -14,7 +14,7 @@ import numpy as np
 import semp
 
 
-base_dir = 'comp_M12P3'
+base_dir = 'quick_M12P6_h6_d1_t1'
 
 resolution = 50
 
@@ -22,12 +22,12 @@ wafer_thick = 2
 skin_metal = 'Al'
 skin_thick = 0.25
 
-scallop_height = 0.8
-scallop_depth  = 0.225
-taper_angle = 5
+scallop_height = 0.6
+scallop_depth  = 0.1
+taper_angle = 1
 
 seam_dark = 10
-seam_lite = 20
+seam_lite = 25
 n_periods = 150
 
 waves = [0.641, 0.660, 0.699, 0.725][:1]
@@ -64,6 +64,7 @@ MEEP_params = {
 
 #Main parameters
 PROP_params = {
+    'save_all':         False,
 }
 
 #Loop through wavelengths and run
