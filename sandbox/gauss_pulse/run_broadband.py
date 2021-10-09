@@ -115,7 +115,7 @@ def get_sim(sim_src):
 # if rank == 0:
 #     print(f'Time 1: {time.perf_counter()-tik:.3f}')
 #
-#     with h5py.File('./si_narrow_ez.h5', 'w') as f:
+#     with h5py.File('./saves/si_narrow_ez.h5', 'w') as f:
 #         f.create_dataset('waves', data=waves)
 #         f.create_dataset('ez', data=all_ez)
 
@@ -138,6 +138,6 @@ MPI.COMM_WORLD.Barrier()
 if rank == 0:
     print(f'Time 2: {time.perf_counter()-tik:.3f}')
 
-    with h5py.File('./si_broad_ez3.h5', 'w') as f:
+    with h5py.File('./saves/si_broad_ez3.h5', 'w') as f:
         f.create_dataset('waves', data=waves)
         f.create_dataset('ez', data=all_ez)

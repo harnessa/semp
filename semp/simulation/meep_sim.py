@@ -107,8 +107,9 @@ class Meep_Sim(object):
             if getattr(self, f'{ob}_epsilon') is not None:
                 #Set via epsilon
                 eps = getattr(self, f'{ob}_epsilon').real
-                Dcon = 2.*np.pi*self.fcen * getattr(self, f'{ob}_epsilon').imag / \
-                    self.wafer_epsilon.real
+                #FIXME: choose frequency
+                Dcon = 2.*np.pi*self.freqs[0] * getattr(self, f'{ob}_epsilon').imag / \
+                    getattr(self, f'{ob}_epsilon').real
                 setattr(self, f'{ob}_mat_obj', mp.Medium(epsilon=eps, D_conductivity=Dcon))
 
             else:
