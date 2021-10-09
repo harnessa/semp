@@ -33,6 +33,7 @@ class Meep_Sim(object):
 
         #Force datatypes
         self.resolution = int(self.resolution)
+        self.waves = np.atleast_1d(self.waves)
 
         #Set pads + pmls
         self.set_pads_pmls()
@@ -41,19 +42,20 @@ class Meep_Sim(object):
         if self.is_sommerfeld:
             self.apply_sommerfeld()
 
-        #Calculate central frequency and width
-        self.fcen = 1./self.wave
+        #Calculate frequencies and width
+        self.freqs = 1./self.waves
+        self.fcen0 = self.freqs.mean()
+        self.dfreq = max(2.*self.freqs.ptp(), 0.35)
 
         #Source offset
         self.src_offset = mp.Vector3(y=self.source_offset_y, \
             z=self.source_offset_z) * self.util.m2mu
 
         #Convert timescales
-        self.run_time = self.n_periods*self.wave
         if self.prop.save_nt is None:
-            self.save_dt = self.run_time
+            self.save_dt = self.n_periods
         else:
-            self.save_dt = self.wave/self.prop.save_nt
+            self.save_dt = 1/self.prop.save_nt
 
         #Force scallop height to be greater than twice depth
         self.scallop_height = max(self.scallop_height, 2*self.scallop_depth)
@@ -203,7 +205,7 @@ class Meep_Sim(object):
         #Get source component
         src_comp = getattr(mp, {'s': 'Ez', 'p': 'Hz'}[pol])
 
-        #Build source   #TODO: add gaussian beam source option
+        #Build source
         sources = [mp.Source(sim_src, component=src_comp, center=src_pt, \
             size=mp.Vector3(y=src_sze_y, z=src_sze_z), amp_func=amp_func)]
 
@@ -212,10 +214,10 @@ class Meep_Sim(object):
     def get_source_function(self):
 
         #Get source dependent
-        sim_src = mp.ContinuousSource(self.fcen, is_integrated=True)
+        sim_src = mp.GaussianSource(self.fcen0, fwidth=self.dfreq, is_integrated=True)
 
-        #For amp func
-        kk = 2.*np.pi*self.fcen
+        #For amp func   #TODO: check amp function with broadband
+        kk = 2.*np.pi*self.fcen0
         dist = self.source_distance*self.util.m2mu + self.geo.source_x
 
         #Amplitude function

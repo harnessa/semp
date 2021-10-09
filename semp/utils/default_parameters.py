@@ -27,7 +27,7 @@ def_params_MEEP = {
 
     ### Lab Properties  ###
     'polars':           ['s','p'],  # Polarization. Options:'s'-skipping, 'p'-plunging
-    'wave':             0.5,        # Central wavelength.
+    'waves':            np.array([0.5]),        # Array of wavelengths.
     'is_diverging':     False,      # Diverging light source
     'source_distance':  27.5,       # Units: [m], Light source distance for diverging beam
     'source_offset_y':  0,          # Units: [m], Light source center in y
@@ -67,6 +67,8 @@ def_params_MEEP = {
     'pml_all':          None,       # If not None, replaces all PML components with value
     'pad_all':          None,       # If not None, replaces all pad components with value
     'n_periods':        50,         # Number of optical time periods to run
+    'decay_dt':         50,         # Time after decay to
+    'decay_by':         1e-3,       # Decay amount
     'courant':          0.5,        # Courant number (lower is slower, but more numerically stable)
 }
 

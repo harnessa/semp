@@ -39,7 +39,7 @@ class Geometry_3D(Geometry_2D):
 
         ## z ##
         self.blk_sze_z = self.pmlz + self.padz
-        self.non_pml_sz = self.lz - 2.*self.pmlz
+        self.non_pml_lz = self.lz - 2.*self.pmlz
 
         ## corner ##
         self.with_broken_corner = self.corner_dy > 0 and self.corner_dz > 0

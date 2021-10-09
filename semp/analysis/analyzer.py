@@ -15,7 +15,6 @@ import meep as mp
 import numpy as np
 import matplotlib.pyplot as plt;plt.ion()
 import h5py
-import glob
 
 class Analyzer(object):
 
@@ -86,10 +85,10 @@ class Analyzer(object):
 ####	Process Data ####
 ############################################
 
-    def get_data(self, comp, ind=None, is_bbek=False):
+    def get_data(self, comp, wave=None, ind=None, is_bbek=False):
         #Load data
-        fld = self.load_field(comp, ind=ind)
-        vac = self.load_field(comp, ind=ind, is_vac=True)
+        fld = self.load_field(comp, wave=wave, ind=ind)
+        vac = self.load_field(comp, wave=wave, ind=ind, is_vac=True)
 
         #Normalize by vacuum field
         if not np.allclose(np.abs(vac),0):
@@ -110,51 +109,21 @@ class Analyzer(object):
 
     def load_metadata(self):
 
-        #Get time extension for filenames
-        if self.time_ext is None:
-            time_ext = float(np.load(f'{self.data_dir}/time_ext.npy'))
-            self.meta_time_ext = f"-{time_ext:09.2f}"
-            self.data_time_ext = glob.glob(f'{self.data_dir}/ez-*.h5')[0] \
-                .split('/')[-1].split('ez')[-1].split('.h5')[0]
-        else:
-            self.meta_time_ext = '-' + self.time_ext
-            self.data_time_ext = '-' + self.time_ext
-
         #Load coordinates
         for is_vac in [True, False]:
 
             #Prefix
             pre = ['','vac-'][int(is_vac)]
 
-            with h5py.File(f"{self.data_dir}/{pre}coords{self.meta_time_ext}.h5", 'r') as f:
+            with h5py.File(f"{self.data_dir}/{pre}coords_waves.h5", 'r') as f:
                 for c in ['xx','yy','zz']:
                     setattr(self, f"{['','vac_'][int(is_vac)]}{c}", f[c][()])
-
-        #Trim PML
-        self.trim_pml()
-
-    def trim_pml(self):
-
-        #Store pml size (with pad for y)
-        self.pnum_x = int(self.prop.msim.geo.pmlx * self.prop.msim.resolution)
-        self.pnum_y = int(self.prop.msim.geo.padpmly * self.prop.msim.resolution)
-        self.pnum_z = int(self.prop.msim.geo.pmlz * self.prop.msim.resolution)
-
-        #Exit if this has been done before
-        if abs(self.yy.size - self.prop.msim.geo.ly * self.prop.msim.resolution) > 5:
-            print('\nPML Already Trimmed!\n')
-            # breakpoint()
-            return
-
-        #Trim pml
-        self.xx = self.xx[self.pnum_x:self.xx.size-self.pnum_x]
-        self.yy = self.yy[self.pnum_y:self.yy.size-self.pnum_y]
-        self.zz = self.zz[self.pnum_z:self.zz.size-self.pnum_z]
+                self.waves = f['waves'][()]
 
         #Shift y to put zero at edge
         self.yy += self.prop.msim.geo.edge_y
 
-    def load_field(self, comp, is_vac=False, ind=None):
+    def load_field(self, comp, wave=None, is_vac=False, ind=None):
 
         #Fix ind
         if ind is None:
@@ -166,19 +135,28 @@ class Analyzer(object):
         #Vacuuum extension
         vac_ext = ['', 'vac-'][int(is_vac)]
 
-        #Filename
-        fname = self.data_dir + '/' + vac_ext + comp + self.data_time_ext + ".h5"
+        #polariztion
+        if comp in ['ez', 'hx', 'hy']:
+            pol = 's'
+        else:
+            pol = 'p'
 
-        #Load data (without pml) - ugly index is due to slow fancy indexing in h5py
+        #wavelength index
+        if wave is None:
+            wind = 0
+        else:
+            wind = np.argmin(np.abs(wave - self.waves))
+            #Check its close
+            if np.abs(self.waves[wind] - wave) > 5:
+                print('\nWavelength is not close!\n')
+                breakpoint()
+
+        #Filename
+        fname = f'{self.data_dir}/{vac_ext}fields_{pol}.h5'
+
+        #Load data
         with h5py.File(fname, 'r') as f:
-            if not is_vac:
-                sx, sy = f[f'{comp}.r'].shape
-                data = f[f'{comp}.r'][self.pnum_x:sx-self.pnum_x, self.pnum_y:sy-self.pnum_y] + \
-                    1j*f[f'{comp}.i'][self.pnum_x:sx-self.pnum_x, self.pnum_y:sy-self.pnum_y]
-            else:
-                sx = f[f'{comp}.r'].shape[0]
-                data = f[f'{comp}.r'][self.pnum_x:sx-self.pnum_x] + \
-                    1j*f[f'{comp}.i'][self.pnum_x:sx-self.pnum_x]
+            data = f[f'{comp}_{wind}.r'][()] + 1j*f[f'{comp}_{wind}.i'][()]
 
         #Extract index slice
         data = data[ind]
@@ -208,11 +186,6 @@ class Analyzer(object):
         #Get coordinates
         self.xx, self.yy, self.zz, w = sim.get_array_metadata()
 
-        #Trim pml
-        self.trim_pml()
-        sx, sy = self.eps.shape
-        self.eps = self.eps[self.pnum_x:sx-self.pnum_x, self.pnum_y:sy-self.pnum_y]
-
 ############################################
 ############################################
 
@@ -220,7 +193,7 @@ class Analyzer(object):
 ####	Collect Braunbek ####
 ############################################
 
-    def collect_braunbek(self):
+    def collect_braunbek(self, wave=None):
 
         #Get xind at bottom of wafer
         xind = self.get_xind(self.prop.msim.wafer_thick/2)
@@ -233,8 +206,8 @@ class Analyzer(object):
         for data_list in data_names:
 
             #Get data
-            fld = self.get_data(data_list[0], ind=xind, is_bbek=True)
-            drv = self.get_data(data_list[1], ind=xind, is_bbek=True)
+            fld = self.get_data(data_list[0], wave=wave, ind=xind, is_bbek=True)
+            drv = self.get_data(data_list[1], wave=wave, ind=xind, is_bbek=True)
 
             #Combine fields for Braunbek difference field
             avg = (fld + drv) / 2
@@ -252,10 +225,10 @@ class Analyzer(object):
 ####	Plot Analyses ####
 ############################################
 
-    def show_image(self, comp, is_phase=False, is_bbek=False):
+    def show_image(self, comp, wave=None, is_phase=False, is_bbek=False):
 
         #Load data
-        data = self.get_data(comp, is_bbek=is_bbek)
+        data = self.get_data(comp, wave=wave, is_bbek=is_bbek)
 
         #Convert
         if is_phase:
@@ -266,12 +239,12 @@ class Analyzer(object):
         #Plot
         return self.plotter.plot_image(data, is_phase=is_phase, title=comp)
 
-    def show_slice(self, comp, is_phase=False, is_bbek=False):
+    def show_slice(self, comp, wave=None, is_phase=False, is_bbek=False):
         #Get index
         xind = self.get_xind()
 
         #Load data
-        data = self.get_data(comp, ind=xind, is_bbek=is_bbek)
+        data = self.get_data(comp, wave=wave, ind=xind, is_bbek=is_bbek)
 
         #Convert
         if is_phase:
@@ -309,7 +282,7 @@ class Analyzer(object):
 ############################################
 
     def clean_up(self):
-        names = ['xx', 'yy', 'zz']
+        names = ['xx', 'yy', 'zz', 'eps']
         for nn in names:
             if hasattr(self, nn):
                 delattr(self, nn)

@@ -48,6 +48,7 @@ class Geometry_2D(object):
         ## x ##
         self.lx = 2*self.padpmlx + self.wafer_thick
         self.source_x = -self.lx/2. + self.pmlx
+        self.non_pml_lx = self.lx - 2*self.pmlx
 
         ## y ##
         if self.is_edge:
@@ -55,9 +56,11 @@ class Geometry_2D(object):
         else:
             self.ly = 2*(self.padpmly + self.seam_dark) + self.gap_width
         self.edge_y = self.ly/2 - (self.padpmly + self.seam_dark)
+        self.non_pml_ly = self.ly - 2*self.pmly
 
         ## z ##
         self.lz = 0
+        self.non_pml_lz = 0
 
         ## cell ##
         self.cell_size = mp.Vector3(self.lx, self.ly, self.lz)

@@ -107,56 +107,69 @@ class Propagator(object):
         #Set output directory + prefix
         sim.use_output_directory(self.logger.data_dir)
         sim.filename_prefix = ['', 'vac'][int(is_vac)]
+        dft_name = f'{self.logger.data_dir}/{["", "vac-"][int(is_vac)]}fields_{pol}'
 
         #Get fields to output
         if self.save_all:
-            fld_names = {'s':['efield_z','hfield_x','hfield_y'], \
-                'p':['hfield_z','efield_x','efield_y']}[pol]
+            fld_names = {'s':[mp.Ez, mp.Hx, mp.Hy], 'p':[mp.Hz, mp.Ex, mp.Ey]}[pol]
         else:
-            fld_names = {'s':['efield_z','hfield_y'], \
-                'p':['hfield_z','efield_y']}[pol]
+            fld_names = {'s':[mp.Ez, mp.Hy], 'p':[mp.Hz, mp.Ey]}[pol]
 
-        fld_outs = [getattr(mp, f'output_{fn}') for fn in fld_names]
+        #Volume to save (non-PML)
+        vlx = self.msim.geo.non_pml_lx
+        if is_vac:
+            vly, vlz = 0, 0
+        else:
+            vly = self.msim.geo.non_pml_ly
+            vlz = self.msim.geo.non_pml_lz
+        vol = mp.Volume(size=mp.Vector3(vlx, vly, vlz))
+
+        #Add DFT fields
+        dft_obj = sim.add_dft_fields(fld_names, self.msim.freqs, where=vol)
+
+        #Decay check
+        dcy_pt = mp.Vector3(x=self.msim.wafer_thick/2)
+        dcy_cn = {'s':mp.Ez, 'p':mp.Hz}[pol]
 
         #Run sim
-        sim.run(mp.at_end(mp.synchronized_magnetic(*fld_outs)), \
-            until=self.msim.run_time)
+        sim.run(until_after_sources=mp.stop_when_fields_decayed( \
+            dt=self.msim.decay_dt, pt=dcy_pt, c=dcy_cn, decay_by=self.msim.decay_by))
+
+        #Synchronize magnetic fields
+        sim.fields.synchronize_magnetic_fields()
+
+        #Output DFT fields
+        sim.output_dft(dft_obj, dft_name)
 
         #Output times
-        fname = f'{self.logger.data_dir}/{["", "vac-"][int(is_vac)]}times_{pol}'
-        sim.output_times(fname)
+        tname = f'{self.logger.data_dir}/{["", "vac-"][int(is_vac)]}times_{pol}'
+        sim.output_times(tname)
 
         #Get metadata
         if get_meta:
 
             #Get dielectric
-            eps = sim.get_array(component=mp.Dielectric)
+            eps = sim.get_array(vol=vol, component=mp.Dielectric)
 
             #Get coordinates
-            x,y,z,w = sim.get_array_metadata()
-
-            #Get run time
-            run_time = sim.meep_time()
+            x,y,z,w = sim.get_array_metadata(dft_cell=dft_obj)
 
             #Save metadata
             if semp.zero_rank:
 
                 #Prefix
                 pre = f"{self.logger.data_dir}/{['', 'vac-'][int(is_vac)]}"
-                pst = f"-{run_time:09.2f}"
 
                 #Save dielectric
-                with h5py.File(f'{pre}eps{pst}.h5', 'w') as f:
+                with h5py.File(f'{pre}eps.h5', 'w') as f:
                     f.create_dataset('dielectric', data=eps)
 
                 #Save coordinates
-                with h5py.File(f'{pre}coords{pst}.h5', 'w') as f:
+                with h5py.File(f'{pre}coords_waves.h5', 'w') as f:
                     f.create_dataset('xx', data=x)
                     f.create_dataset('yy', data=y)
                     f.create_dataset('zz', data=z)
-
-                #Save run time
-                np.save(f'{self.logger.data_dir}/time_ext', run_time)
+                    f.create_dataset('waves', data=self.msim.waves)
 
             #Wait
             semp.mpi_barrier()
@@ -215,7 +228,7 @@ class Propagator(object):
         out_funcs = [eps_func, h5_func, png_func]
 
         #Run sim
-        sim.run(*out_funcs, until=self.msim.run_time)
+        sim.run(*out_funcs, until=self.msim.n_periods)
 
         #Reset sim
         sim.reset_meep()

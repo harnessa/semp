@@ -17,13 +17,13 @@ import semp
 class Test_Sommerfeld(object):
 
     ### HARDWIRED ###
-    wave = 0.641
+    waves = [0.641, 0.725]
     pad = 4.
     pml = 4.
     seam_dark = 5.
     seam_lite = 10.
     resolution = 30
-    atol = 0.01
+    atol = 0.02
     do_plot = False and semp.mpi_size == 1
 
 ############################################
@@ -46,25 +46,32 @@ class Test_Sommerfeld(object):
             }
             alz = semp.analysis.Analyzer(alz_params)
 
-            #Loop through and check with and without braunbek
-            for is_bbek in [False, True]:
+            #Loop through waves
+            for wave in self.waves:
 
-                #Check simulation
-                self.check_simulation(alz, is_bbek)
+                #Loop through and check with and without braunbek
+                for is_bbek in [False, True]:
 
-                #Check analyzer
-                self.check_analyzer(alz, is_bbek)
+                    #Check simulation
+                    self.check_simulation(wave, alz, is_bbek)
 
-    def check_simulation(self, alz, is_bbek):
+                    #Check analyzer
+                    self.check_analyzer(wave, alz, is_bbek)
+
+    def check_simulation(self, wave, alz, is_bbek):
 
         #Find index corresponding to observation distance (account for Yee lattice)
         xind = np.argmin(np.abs(alz.xx - 0.5/alz.prop.msim.resolution - alz.obs_distance))
 
         #Load and normalize data
-        sez = alz.load_field('ez', ind=xind) / alz.load_field('ez', ind=xind, is_vac=True)
-        shz = alz.load_field('hz', ind=xind) / alz.load_field('hz', ind=xind, is_vac=True)
-        sey = alz.load_field('ey', ind=xind) / alz.load_field('ey', ind=xind, is_vac=True)
-        shy = alz.load_field('hy', ind=xind) / alz.load_field('hy', ind=xind, is_vac=True)
+        sez = alz.load_field('ez', wave=wave, ind=xind) / \
+            alz.load_field('ez', wave=wave, ind=xind, is_vac=True)
+        shz = alz.load_field('hz', wave=wave, ind=xind) / \
+            alz.load_field('hz', wave=wave, ind=xind, is_vac=True)
+        sey = alz.load_field('ey', wave=wave, ind=xind) / \
+            alz.load_field('ey', wave=wave, ind=xind, is_vac=True)
+        shy = alz.load_field('hy', wave=wave, ind=xind) / \
+            alz.load_field('hy', wave=wave, ind=xind, is_vac=True)
 
         #Subtract Braunbek field
         if is_bbek:
@@ -77,7 +84,7 @@ class Test_Sommerfeld(object):
         sdata = [sez, shz, sey, shy]
 
         #Compare to sommerfeld
-        adata, ddata = self.compare_to_sommerfeld(sdata, xind, alz, is_bbek)
+        adata, ddata = self.compare_to_sommerfeld(wave, sdata, xind, alz, is_bbek)
 
         #Plot?
         if self.do_plot:
@@ -86,17 +93,17 @@ class Test_Sommerfeld(object):
 
     ############################################
 
-    def check_analyzer(self, alz, is_bbek):
+    def check_analyzer(self, wave, alz, is_bbek):
 
         #Get xindex
         xind = alz.get_xind()
 
         #Load normalized data
         data_list = ['ez','hz','ey','hy']
-        sdata = [alz.get_data(dn, ind=xind, is_bbek=is_bbek) for dn in data_list]
+        sdata = [alz.get_data(dn, wave=wave, ind=xind, is_bbek=is_bbek) for dn in data_list]
 
         #Compare to sommerfeld
-        adata, ddata = self.compare_to_sommerfeld(sdata, xind, alz, is_bbek)
+        adata, ddata = self.compare_to_sommerfeld(wave, sdata, xind, alz, is_bbek)
 
         #Plot?
         if self.do_plot:
@@ -105,10 +112,10 @@ class Test_Sommerfeld(object):
 
     ############################################
 
-    def compare_to_sommerfeld(self, sdata, xind, alz, is_bbek):
+    def compare_to_sommerfeld(self, wave, sdata, xind, alz, is_bbek):
 
         #Load sommerfeld
-        som = semp.analysis.Sommerfeld({'wave':self.wave})
+        som = semp.analysis.Sommerfeld({'wave':wave})
 
         #Get sommerfeld solution
         axx = alz.xx[xind]
@@ -145,7 +152,7 @@ class Test_Sommerfeld(object):
         MEEP_params = {
             ### Lab Properties  ###
             'polars':           ['s', 'p'],
-            'wave':             self.wave,
+            'waves':            self.waves,
 
             ### Mask Properties ###
             'sim_geometry':     'edge',
@@ -157,9 +164,8 @@ class Test_Sommerfeld(object):
             'resolution':       self.resolution,
             'pml_all':          self.pml,
             'pad_all':          self.pad,
-            'n_periods':        50,
+            'decay_dt':         30,
             'use_absorber':     True,
-
         }
 
         PROP_params = {
