@@ -141,7 +141,7 @@ class Analyzer(object):
         self.pnum_z = int(self.prop.msim.geo.pmlz * self.prop.msim.resolution)
 
         #Exit if this has been done before
-        if abs(self.yy.size - self.prop.msim.geo.ly * self.prop.msim.resolution) > 2:
+        if abs(self.yy.size - self.prop.msim.geo.ly * self.prop.msim.resolution) > 5:
             print('\nPML Already Trimmed!\n')
             # breakpoint()
             return
@@ -152,8 +152,7 @@ class Analyzer(object):
         self.zz = self.zz[self.pnum_z:self.zz.size-self.pnum_z]
 
         #Shift y to put zero at edge
-        if self.prop.msim.sim_geometry == 'edge':
-            self.yy += self.prop.msim.geo.edge_y
+        self.yy += self.prop.msim.geo.edge_y
 
     def load_field(self, comp, is_vac=False, ind=None):
 

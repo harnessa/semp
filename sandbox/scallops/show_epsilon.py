@@ -1,18 +1,6 @@
-"""
-show_epsilon.py
-
-Author: Anthony Harness
-Affiliation: Princeton University
-Created on: 08-12-2021
-Package: SEMP
-
-Description: Build simulation and show dielectric
-License: Refer to $pkg_home_dir/LICENSE
-"""
-
 import numpy as np
 import semp
-# import matplotlib.pyplot as plt;plt.ion()
+import matplotlib.pyplot as plt;plt.ion()
 
 MEEP_params = {
 
@@ -33,10 +21,9 @@ MEEP_params = {
     'scallop_depth':    0.1,
     'scallop_start':    0.,
     'taper_angle':      5,
-    # 'footing_size':     [0.2, 0.5],
 
     ### Numerics ###
-    'resolution':       80,
+    'resolution':       40,
     'pml_all':          1,
     'pad_all':          1,
 

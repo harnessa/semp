@@ -1,5 +1,6 @@
 #SEMP
 Internal_Data/tmp/*
+*.h5
 ###############
 
 # Byte-compiled / optimized / DLL files

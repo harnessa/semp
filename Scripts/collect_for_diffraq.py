@@ -15,12 +15,12 @@ import semp
 import h5py
 import matplotlib.pyplot as plt;plt.ion()
 
-base_dir = 'M12P6_h6_d1_a1'
+base_dir = 'quick_M12P6_t1'
 waves = [641, 660, 699, 725]
 
 do_save = [False, True][1]
 mask = 'M12P6'
-save_ext = 'semp_h6_d1_a1'
+save_ext = 'semp_quick_t1'
 save_dir = '/home/aharness/repos/diffraq/External_Data/Vector_Edges'
 
 #Figures
@@ -60,5 +60,5 @@ if do_save:
             f.create_dataset(f'{waves[i]:.0f}_p', data=data[i][1])
             f.create_dataset(f'{waves[i]:.0f}_x', data=data[i][2]*1e-6)
 
-
-# breakpoint()
+else:
+    breakpoint()

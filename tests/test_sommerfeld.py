@@ -24,7 +24,7 @@ class Test_Sommerfeld(object):
     seam_lite = 10.
     resolution = 30
     atol = 0.01
-    do_plot = True and semp.mpi_size == 1
+    do_plot = False and semp.mpi_size == 1
 
 ############################################
 ####	Tests ####
@@ -112,7 +112,7 @@ class Test_Sommerfeld(object):
 
         #Get sommerfeld solution
         axx = alz.xx[xind]
-        print(axx)
+
         aex, aey, aez, ahx, ahy, ahz = som.get_sommerfeld_solution(axx, alz.yy, \
             is_bbek=is_bbek)
 
@@ -170,7 +170,7 @@ class Test_Sommerfeld(object):
 
         #Run simulation
         prop = semp.Propagator(MEEP_params, PROP_params)
-        # prop.run_sim()
+        prop.run_sim()
 
         # ##Debug Only
         # if semp.mpi_size > 1:

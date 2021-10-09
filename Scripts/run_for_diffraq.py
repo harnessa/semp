@@ -14,23 +14,23 @@ import numpy as np
 import semp
 
 
-base_dir = 'quick_M12P6_h6_d1_t1'
+base_dir = 'M12P6_h6_d1_t5_Ag'
 
 resolution = 50
 
-wafer_thick = 2
-skin_metal = 'Al'
+wafer_thick = 2.
+skin_metal = 'Ag'       #FIXME
 skin_thick = 0.25
 
 scallop_height = 0.6
 scallop_depth  = 0.1
-taper_angle = 1
+taper_angle = 5
 
 seam_dark = 10
 seam_lite = 25
 n_periods = 150
 
-waves = [0.641, 0.660, 0.699, 0.725][:1]
+waves = [0.641, 0.660, 0.699, 0.725]
 
 ######################################
 
@@ -45,7 +45,7 @@ MEEP_params = {
     'seam_dark':        seam_dark,
     'seam_lite':        seam_lite,
 
-    'wafer_material':   'cSi',
+    'wafer_material':   'Si',       #FIXME
     'skin_material':    skin_metal,
     'wafer_thick':      wafer_thick,
     'skin_thick':       skin_thick,
