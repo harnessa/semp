@@ -50,6 +50,7 @@ def_params_MEEP = {
     'scallop_depth':    0.,         # Depth of scallops (>0 turns on scallops) [um]
     'scallop_start':    0.,         # Vertical distance below skin where scallops start [um]
     'taper_angle':      0,          # Angle to taper edge [deg]
+    'shave_angle':      0,          # Angle to shave off scallops [deg]
     'footing_size':     None,       # Height and width of ellipsoidal footing [um]
     'corner_length':    0.,         # Length of gap extending in z  [um]
     'corner_dy':        0.,         # Distance broken corner extrudes in y [um]

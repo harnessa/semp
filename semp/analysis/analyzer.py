@@ -181,7 +181,7 @@ class Analyzer(object):
         sim.init_sim()
 
         #Get dielectric
-        self.eps = np.abs(sim.get_epsilon(self.prop.msim.fcen))
+        self.eps = np.abs(sim.get_epsilon(self.prop.msim.fcen0))
 
         #Get coordinates
         self.xx, self.yy, self.zz, w = sim.get_array_metadata()

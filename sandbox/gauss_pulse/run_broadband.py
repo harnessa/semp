@@ -15,7 +15,11 @@ pad = 4
 waves = np.array([0.641, 0.660, 0.699, 0.725])
 fcens = 1/waves
 
-run_time = 120
+run_time = 80
+
+nn = 3.859
+kk = 0.015
+eps = (nn**2 - kk**2) + 1j*(2*nn*kk)
 
 MEEP_params = {
     ### Mask Properties ###
@@ -24,7 +28,8 @@ MEEP_params = {
     'seam_lite':        seam_lite,
 
     # 'is_sommerfeld':    True,
-    'wafer_material':   'cSi',
+    # 'wafer_material':   'cSi',
+    'wafer_epsilon':    eps,
     'skin_material':    'Al',
     'wafer_thick':      2,
     'skin_thick':       0.25,
@@ -96,28 +101,28 @@ def get_sim(sim_src):
 ###########################################
 #Run narrow
 
-# tik = time.perf_counter()
-#
-# all_ez = []
-# for iw in range(len(waves)):
-#
-#     sim_src = mp.ContinuousSource(fcens[iw], is_integrated=True)
-#
-#     sim = get_sim(sim_src)
-#     sim.run(until=run_time)
-#
-#     ez = sim.get_array(vol=nonpml_vol, component=mp.Ez)
-#
-#     all_ez.append(ez)
-#
-# MPI.COMM_WORLD.Barrier()
-#
-# if rank == 0:
-#     print(f'Time 1: {time.perf_counter()-tik:.3f}')
-#
-#     with h5py.File('./saves/si_narrow_ez.h5', 'w') as f:
-#         f.create_dataset('waves', data=waves)
-#         f.create_dataset('ez', data=all_ez)
+tik = time.perf_counter()
+
+all_ez = []
+for iw in range(len(waves))[:1]:
+
+    sim_src = mp.ContinuousSource(fcens[iw], is_integrated=True)
+
+    sim = get_sim(sim_src)
+    sim.run(until=run_time)
+
+    ez = sim.get_array(vol=nonpml_vol, component=mp.Ez)
+
+    all_ez.append(ez)
+
+MPI.COMM_WORLD.Barrier()
+
+if rank == 0:
+    print(f'Time 1: {time.perf_counter()-tik:.3f}')
+
+    with h5py.File('./saves/si_narrow_ez_eps.h5', 'w') as f:
+        f.create_dataset('waves', data=waves)
+        f.create_dataset('ez', data=all_ez)
 
 ###########################################
 ###########################################
@@ -138,6 +143,6 @@ MPI.COMM_WORLD.Barrier()
 if rank == 0:
     print(f'Time 2: {time.perf_counter()-tik:.3f}')
 
-    with h5py.File('./saves/si_broad_ez3.h5', 'w') as f:
+    with h5py.File('./saves/si_broad_ez_eps.h5', 'w') as f:
         f.create_dataset('waves', data=waves)
         f.create_dataset('ez', data=all_ez)

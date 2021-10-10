@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt;plt.ion()
 MEEP_params = {
 
     ### Lab Properties  ###
-    'wave':             0.641,
+    'waves':            0.641,
 
     ### Mask Properties ###
     'sim_geometry':     'edge',
-    'seam_dark':        2,
-    'seam_lite':        2,
+    'seam_dark':        0,
+    'seam_lite':        0,
 
     'wafer_material':   'cSi',
     'skin_material':    'metal',
@@ -18,14 +18,14 @@ MEEP_params = {
     'skin_thick':       0.25,
 
     'scallop_height':   0.6,
-    'scallop_depth':    0.1,
-    'scallop_start':    0.,
-    'taper_angle':      5,
+    'scallop_depth':    0.2,
+    'taper_angle':      0,
+    'shave_angle':      6,
 
     ### Numerics ###
-    'resolution':       40,
+    'resolution':       100,
     'pml_all':          1,
-    'pad_all':          1,
+    'pad_all':          0,
 
 }
 

@@ -3,11 +3,11 @@ import h5py
 import matplotlib.pyplot as plt;plt.ion()
 
 
-with h5py.File('./saves/si_narrow_ez.h5', 'r') as f:
+with h5py.File('./saves/narrow_ez.h5', 'r') as f:
     waves = f['waves'][()]
     nez = f['ez'][()]
 
-with h5py.File('./saves/si_solver.h5', 'r') as f:
+with h5py.File('./saves/solver.h5', 'r') as f:
     bez = f['ez'][()]
 
 fig, axes = plt.subplots(1, 3, figsize=(11,6))
