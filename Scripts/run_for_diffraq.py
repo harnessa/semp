@@ -14,12 +14,12 @@ import numpy as np
 import semp
 
 
-base_dir = 'M12P6_h6_d1_t5_Ag'
+session = 'test_gauss'
 
 resolution = 50
 
-wafer_thick = 2.
-skin_metal = 'Ag'       #FIXME
+wafer_thick = 1.
+skin_metal = 'Al'
 skin_thick = 0.25
 
 scallop_height = 0.6
@@ -28,7 +28,6 @@ taper_angle = 5
 
 seam_dark = 10
 seam_lite = 25
-n_periods = 150
 
 waves = [0.641, 0.660, 0.699, 0.725]
 
@@ -39,13 +38,14 @@ MEEP_params = {
 
     ### Lab Properties  ###
     'polars':           ['s', 'p'],
+    'waves':            waves,
 
     ### Mask Properties ###
     'sim_geometry':     'edge',
     'seam_dark':        seam_dark,
     'seam_lite':        seam_lite,
 
-    'wafer_material':   'Si',       #FIXME
+    'wafer_material':   'cSi',
     'skin_material':    skin_metal,
     'wafer_thick':      wafer_thick,
     'skin_thick':       skin_thick,
@@ -58,22 +58,15 @@ MEEP_params = {
     'resolution':       resolution,
     'pml_all':          4,
     'pad_all':          4,
-    'n_periods':        n_periods,
 
 }
 
 #Main parameters
 PROP_params = {
+    'session':          session,
     'save_all':         False,
 }
 
-#Loop through wavelengths and run
-for wv in waves:
-
-    #Add wavelength to parameters
-    MEEP_params['wave'] = wv
-    PROP_params['session'] = f'{base_dir}/{wv*1e3:.0f}nm'
-
-    #Run simulation
-    prop = semp.Propagator(MEEP_params, PROP_params)
-    prop.run_sim()
+#Run simulation
+prop = semp.Propagator(MEEP_params, PROP_params)
+prop.run_sim()

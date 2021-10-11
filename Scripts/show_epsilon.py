@@ -12,12 +12,12 @@ License: Refer to $pkg_home_dir/LICENSE
 
 import numpy as np
 import semp
-# import matplotlib.pyplot as plt;plt.ion()
+import matplotlib.pyplot as plt;plt.ion()
 
 MEEP_params = {
 
     ### Lab Properties  ###
-    'wave':             0.641,
+    'waves':            0.641,
 
     ### Mask Properties ###
     'sim_geometry':     'edge',
@@ -33,7 +33,6 @@ MEEP_params = {
     'scallop_depth':    0.1,
     'scallop_start':    0.,
     'taper_angle':      5,
-    # 'footing_size':     [0.2, 0.5],
 
     ### Numerics ###
     'resolution':       80,

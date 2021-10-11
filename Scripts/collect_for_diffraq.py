@@ -15,30 +15,30 @@ import semp
 import h5py
 import matplotlib.pyplot as plt;plt.ion()
 
-base_dir = 'quick_M12P6_t1'
+session = 'test_gauss'
 waves = [641, 660, 699, 725]
 
-do_save = [False, True][1]
+do_save = [False, True][0]
 mask = 'M12P6'
-save_ext = 'semp_quick_t1'
+save_ext = 'test'
 save_dir = '/home/aharness/repos/diffraq/External_Data/Vector_Edges'
 
 #Figures
 fig, axes = plt.subplots(2, sharex=True, sharey=True, figsize=(6,9))
 
+
+#Load analyzer
+params = {
+    'session':      session,
+}
+alz = semp.analysis.Analyzer(params)
+
 #Loop through wavelengths and collect data
 data = []
 for wv in waves:
 
-    params = {
-        'session':      f'{base_dir}/{wv:.0f}nm',
-    }
-
-    #Load analyzer
-    alz = semp.analysis.Analyzer(params)
-
     #Collect and store Braunbek fields (returns sfld, pfld, xx)
-    data.append(alz.collect_braunbek())
+    data.append(alz.collect_braunbek(wave=wv*1e-3))
 
     #Plot
     axes[0].plot(data[-1][2], abs(data[-1][0]), label=f'{wv}nm')

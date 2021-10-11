@@ -147,7 +147,7 @@ class Analyzer(object):
         else:
             wind = np.argmin(np.abs(wave - self.waves))
             #Check its close
-            if np.abs(self.waves[wind] - wave) > 5:
+            if np.abs(self.waves[wind] - wave)/wave > 0.01:
                 print('\nWavelength is not close!\n')
                 breakpoint()
 

@@ -16,8 +16,8 @@ import semp
 #Meep parameters
 MEEP_params = {
     ### Lab Properties  ###
-    'polars':           ['s', 'p'][:1],
-    'wave':             0.641,
+    'polars':           ['s', 'p'],
+    'waves':            0.641,
 
     ### Mask Properties ###
     'sim_geometry':     'gap',
@@ -34,7 +34,6 @@ MEEP_params = {
     'resolution':       30,
     'pml_all':          4,
     'pad_all':          4,
-    'n_periods':        50,
 
 }
 

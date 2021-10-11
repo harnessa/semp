@@ -24,26 +24,10 @@ alz = semp.analysis.Analyzer(params)
 
 is_bbek = False
 is_phase = False
+wave = 0.641
 
 #Plot image
-# axes1 = alz.show_image('hx', is_bbek=is_bbek, is_phase=is_phase)
-# axes1 = alz.show_image('hy', is_bbek=is_bbek, is_phase=is_phase)
-# axes1 = alz.show_image('hz', is_bbek=is_bbek, is_phase=is_phase)
-# axes1 = alz.show_image('ex', is_bbek=is_bbek, is_phase=is_phase)
-# axes1 = alz.show_image('ey', is_bbek=is_bbek, is_phase=is_phase)
-# axes1 = alz.show_image('ez', is_bbek=is_bbek, is_phase=is_phase)
-
-dd = abs(alz.get_data('ez'))
-
-plt.figure()
-plt.imshow(dd)
-
-plt.figure()
-plt.plot(dd[599])
-plt.plot(dd[600])
-plt.plot(dd[601])
-plt.plot(dd[602])
-
-axes2 = alz.show_slice('ez', is_bbek=is_bbek, is_phase=is_phase)
+axes1 = alz.show_image('ez', wave=wave, is_bbek=is_bbek, is_phase=is_phase)
+axes2 = alz.show_slice('ez', wave=wave, is_bbek=is_bbek, is_phase=is_phase)
 
 breakpoint()
