@@ -173,14 +173,15 @@ class Geometry_2D(object):
                 xs0 += self.scallop_height
 
         #Add shaving off of scallops
-        ex = self.wafer_thick/2.
-        dy = self.wafer_thick * (np.tan(np.radians(self.shave_angle)) + \
-            np.tan(np.radians(self.taper_angle)))
-        #lower (in image) left, upper left, upper right, lower right
-        shv_verts = [mp.Vector3( ex, -y1-dy), mp.Vector3(-ex, -y1-1e-3), \
-                     mp.Vector3(-ex, -y1),    mp.Vector3( ex, -y1)]
-        shave = mp.Prism(shv_verts, float(zdepth), material=mp.air)
-        geometry += [shave]
+        if self.shave_angle > 0:
+            ex = self.wafer_thick/2.
+            dy = self.wafer_thick * (np.tan(np.radians(self.shave_angle)) + \
+                np.tan(np.radians(self.taper_angle)))
+            #lower (in image) left, upper left, upper right, lower right
+            shv_verts = [mp.Vector3( ex, -y1-dy), mp.Vector3(-ex, -y1-1e-3), \
+                         mp.Vector3(-ex, -y1),    mp.Vector3( ex, -y1)]
+            shave = mp.Prism(shv_verts, float(zdepth), material=mp.air)
+            geometry += [shave]
 
         #Footing
         if self.footing_size is not None:
