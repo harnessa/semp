@@ -2,16 +2,15 @@ import numpy as np
 import semp
 import matplotlib.pyplot as plt;plt.ion()
 
-alz1 = semp.analysis.Analyzer({'session': 'materials/meep'})
-
-obs_x = 0
 is_bbek = [False, True][1]
+obs_x = 0
 
-xind = alz1.get_xind(obs_x=obs_x)
+alz1 = semp.analysis.Analyzer({'session': 'materials/epsilon'})
+xind = alz1.get_xind(obs_x=alz1.prop.msim.wafer_thick/2 + obs_x)
 ez1 = alz1.get_data('ez', is_bbek=is_bbek)[xind]
 hz1 = alz1.get_data('hz', is_bbek=is_bbek)[xind]
 
-alz2 = semp.analysis.Analyzer({'session': 'materials/epsilon'})
+alz2 = semp.analysis.Analyzer({'session': 'materials/skin_meep_epsilon'})
 ez2 = alz2.get_data('ez', is_bbek=is_bbek)[xind]
 hz2 = alz2.get_data('hz', is_bbek=is_bbek)[xind]
 
