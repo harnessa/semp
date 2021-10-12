@@ -102,7 +102,7 @@ class Meep_Sim(object):
         mat_lib.metal = mp.metal
 
         #Set material objects
-        for ob in ['wafer', 'skin']:
+        for ob in ['wafer', 'skin', 'oxide']:
 
             if getattr(self, f'{ob}_epsilon') is not None:
                 #Set via epsilon
@@ -242,26 +242,6 @@ class Meep_Sim(object):
             return []
         else:
             return self.geo.get_geometry()
-
-############################################
-############################################
-
-############################################
-####	Misc Functions ####
-############################################
-
-    # def adjust_coordinates(self, xx, yy, zz):
-    #     #Shift y if edge
-    #     if self.sim_geometry == 'edge':
-    #         yy += self.gap_width/2
-    #
-    #     #Shift x to bottom of wafer
-    #     # xx -= self.geo.wafer_thick/2
-    #
-    #     #Shift y by 1 resolution
-    #     # yy -= 1/self.resolution
-    #
-    #     return xx, yy, zz
 
 ############################################
 ############################################

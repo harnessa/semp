@@ -37,11 +37,14 @@ def_params_MEEP = {
     'sim_geometry':     'edge',     # Geometry of simulation. Options: [gap, edge, corner, vacuum]
     'wafer_material':   'metal',    # Wafer material
     'skin_material':    'metal',    # Skin and sidewall material
+    'oxide_material':   'metal',    # Oxidation material
     'wafer_epsilon':    None,       # Complex permittivity of wafer material
     'skin_epsilon':     None,       # Complex permittivity of skin material
+    'oxide_epsilon':    None,       # Complex permittivity of oxide material
     'is_sommerfeld':    False,      # Is sommerfeld solution model
     'wafer_thick':      1.,         # Wafer thickness [um]
     'skin_thick':       0.,         # Skin thickness [um]
+    'oxide_thick':      0.,         # Oxidation thickness [um]
     'wall_thick':       0.,         # Sidewall thickness [um]
     'gap_width':        5.,         # Width of gap (also w/ edge) [um]
     'seam_dark':        5.,         # Width of seam on dark side (wafer) [um]

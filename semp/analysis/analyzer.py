@@ -195,8 +195,8 @@ class Analyzer(object):
 
     def collect_braunbek(self, wave=None):
 
-        #Get xind at bottom of wafer
-        xind = self.get_xind(self.prop.msim.wafer_thick/2)
+        #Get xind at bottom of wafer (plus obs_distance)
+        xind = self.get_xind(self.prop.msim.wafer_thick/2 + self.obs_distance)
 
         #Data to collect [[s-fld, s-drv], [p-fld, p-drv]]
         data_names = [['ez', 'hy'], ['hz', 'ey']]
