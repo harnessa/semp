@@ -114,6 +114,7 @@ class Geometry_2D(object):
         #Materials
         waf_mat = self.parent.wafer_mat_obj
         skn_mat = self.parent.skin_mat_obj
+        oxi_mat = self.parent.oxide_mat_obj
 
         #Set start point and width
         if y0 is None:
@@ -141,6 +142,19 @@ class Geometry_2D(object):
         skn_cen = mp.Vector3(skcx, skcy, skcz)
         skin = mp.Block(material=skn_mat, size=skn_sze, center=skn_cen)
         geometry += [skin]
+
+        #Oxidation layer
+        if self.oxide_thick > 0:
+            oksy = y0 - y1
+            okcx = -(self.wafer_thick/2 + self.skin_thick + self.oxide_thick/2)
+            okcy = -y0 + oksy/2.
+            okcz = 0
+            if not np.isclose(zdepth, mp.inf):
+                okcz = zdepth/2
+            oxi_sze = mp.Vector3(self.oxide_thick, oksy, zdepth)
+            oxi_cen = mp.Vector3(okcx, okcy, okcz)
+            oxide = mp.Block(material=oxi_mat, size=oxi_sze, center=oxi_cen)
+            geometry += [oxide]
 
         #Sidewalls
         if self.wall_thick > 0:

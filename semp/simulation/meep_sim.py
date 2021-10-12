@@ -100,7 +100,7 @@ class Meep_Sim(object):
         mat_lib.metal = mp.metal
 
         #Set material objects
-        for ob in ['wafer', 'skin']:
+        for ob in ['wafer', 'skin', 'oxide']:
 
             if getattr(self, f'{ob}_epsilon') is not None:
                 #Set via epsilon
