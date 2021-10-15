@@ -26,16 +26,16 @@ MEEP_params = {
 }
 
 #Aluminum
-MEEP_params['skin_material'] = 'Al'
 ext1 = 'al'
 prop = semp.Propagator(MEEP_params, {'session':f'materials/{ext1}'})
 # prop.run_sim()
 
 #Aluminum oxide
-MEEP_params['skin_material'] = 'Al2O3'
+MEEP_params['oxide_material'] = 'Al2O3'
+MEEP_params['oxide_thick'] = 0.025
 ext2 = 'al2o3'
 prop = semp.Propagator(MEEP_params, {'session':f'materials/{ext2}'})
-# prop.run_sim()
+prop.run_sim()
 
 #Load and save
 if semp.mpi_rank == 0:

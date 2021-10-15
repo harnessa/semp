@@ -58,6 +58,7 @@ def_params_MEEP = {
     'corner_length':    0.,         # Length of gap extending in z  [um]
     'corner_dy':        0.,         # Distance broken corner extrudes in y [um]
     'corner_dz':        0.,         # Distance broken corner extrudes in z [um]
+    'scallop_list':     [],         # List of scallops. Ellipsoid center, ellipsoid size [um]
 
     ### Numerics ###
     'resolution':       30,         # [pixels / um]

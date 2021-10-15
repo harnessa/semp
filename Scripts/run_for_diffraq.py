@@ -14,17 +14,17 @@ import numpy as np
 import semp
 
 
-session = 'test_gauss'
+session = 'test'
 
-resolution = 50
+resolution = 30
 
-wafer_thick = 1.
-skin_metal = 'Al'
+wafer_thick = 2.
+skin_metal = 'metal'
 skin_thick = 0.25
 
 scallop_height = 0.6
 scallop_depth  = 0.1
-taper_angle = 5
+taper_angle = 0
 
 seam_dark = 10
 seam_lite = 25
@@ -45,14 +45,14 @@ MEEP_params = {
     'seam_dark':        seam_dark,
     'seam_lite':        seam_lite,
 
-    'wafer_material':   'cSi',
+    'wafer_material':   'metal',
     'skin_material':    skin_metal,
     'wafer_thick':      wafer_thick,
     'skin_thick':       skin_thick,
 
-    'scallop_height':   scallop_height,
-    'scallop_depth':    scallop_depth,
-    'taper_angle':      taper_angle,
+    # 'scallop_height':   scallop_height,
+    # 'scallop_depth':    scallop_depth,
+    # 'taper_angle':      taper_angle,
 
     ### Numerics ###
     'resolution':       resolution,

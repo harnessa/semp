@@ -26,13 +26,17 @@ MEEP_params = {
 
     'wafer_material':   'cSi',
     'skin_material':    'metal',
-    'wafer_thick':      2.,
-    'skin_thick':       0.25,
+    'wafer_thick':      2.25,
+    'skin_thick':       0.3,
 
-    'scallop_height':   0.6,
-    'scallop_depth':    0.1,
-    'scallop_start':    0.,
-    'taper_angle':      5,
+    'scallop_list':     [[(0.152, 0.405), (0.762, 0.810)], \
+        [(0.095, 1.157), (0.762, 0.824)], [(-0.033, 1.900), (0.762, 0.767)]],
+
+    # 'scallop_height':   0.75,
+    # 'scallop_depth':    0.1,
+    # 'scallop_start':    0.,
+    # 'taper_angle':      6,
+    # 'shave_angle':      2,
 
     ### Numerics ###
     'resolution':       80,

@@ -7,10 +7,10 @@ from mpi4py import MPI
 rank = MPI.COMM_WORLD.rank
 
 seam_dark = 5
-seam_lite = 10
+seam_lite = 5
 resolution = 50
-pml = 4
-pad = 4
+pml = 8
+pad = 1
 
 waves = np.array([0.641, 0.660, 0.699, 0.725])
 fcens = 1/waves
@@ -19,9 +19,11 @@ run_time = 80
 
 MEEP_params = {
     ### Mask Properties ###
-    'sim_geometry':     'edge',
+    'sim_geometry':     'gap',
     'seam_dark':        seam_dark,
     'seam_lite':        seam_lite,
+    'gap_width':        5,
+
 
     'is_sommerfeld':    True,
     # 'wafer_material':   'cSi',

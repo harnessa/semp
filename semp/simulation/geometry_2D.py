@@ -167,7 +167,17 @@ class Geometry_2D(object):
             geometry += [mp.Prism(wal_verts, zdepth, material=skn_mat)]
 
         #Scallops
-        if self.scallop_depth > 0:
+        if len(self.scallop_list) > 0:
+            #Loop through scallop list
+            for scallop in self.scallop_list:
+                #Get current size and center
+                cur_cen, cur_sze = scallop
+                scl_sze = mp.Vector3(cur_sze[1], cur_sze[0], zdepth)
+                scl_cen = mp.Vector3(-self.wafer_thick/2. + cur_cen[1], y1+cur_cen[0])
+                #Add ellipsoid
+                geometry += [mp.Ellipsoid(material=mp.air, size=scl_sze, center=scl_cen)]
+
+        elif self.scallop_depth > 0:
             #Number of scallops
             n_scls = int(self.wafer_thick / self.scallop_height) + 1
             #Starting vertical center point

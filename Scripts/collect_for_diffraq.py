@@ -15,7 +15,7 @@ import semp
 import h5py
 import matplotlib.pyplot as plt;plt.ion()
 
-session = 'test_gauss'
+session = 'test'
 waves = [641, 660, 699, 725]
 
 do_save = [False, True][0]
@@ -35,7 +35,7 @@ alz = semp.analysis.Analyzer(params)
 
 #Loop through wavelengths and collect data
 data = []
-for wv in waves:
+for wv in waves[:1]:
 
     #Collect and store Braunbek fields (returns sfld, pfld, xx)
     data.append(alz.collect_braunbek(wave=wv*1e-3))
