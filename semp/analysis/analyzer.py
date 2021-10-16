@@ -90,18 +90,6 @@ class Analyzer(object):
         fld = self.load_field(comp, wave=wave, ind=ind)
         vac = self.load_field(comp, wave=wave, ind=ind, is_vac=True)
 
-        # #Save sign of vacuum field
-        # sgn = np.sign(vac)
-
-        import matplotlib.pyplot as plt;plt.ion()
-        fig, axes = plt.subplots(2)
-        axes[0].plot(self.yy, abs(fld))
-        # axes[0].axhline(abs(vac))
-        # axes[0].plot(abs(fld/vac))
-        # axes[1].plot(np.angle(fld))
-        # axes[1].axhline(np.angle(vac))
-        # axes[1].plot(np.angle(fld/vac))
-        breakpoint()
         #Normalize by vacuum field
         if not np.allclose(np.abs(vac),0):
             fld /= vac
@@ -109,9 +97,6 @@ class Analyzer(object):
         #Turn subtract 1 if braunbek
         if is_bbek:
             fld -= np.heaviside(self.yy, 1)
-
-        #Restore original sign of field
-        # fld *= sgn
 
         return fld
 
@@ -225,21 +210,7 @@ class Analyzer(object):
             drv = self.get_data(data_list[1], wave=wave, ind=xind, is_bbek=True)
 
             #Combine fields for Braunbek difference field
-            # avg = (fld + drv*{'ez':-1,'hz':1}[data_list[0]]) / 2
-            avg = fld.copy()
-
-
-            # import matplotlib.pyplot as plt;plt.ion()
-            # plt.cla()
-            # plt.plot(abs(fld))
-            # plt.plot(abs(drv))
-            # plt.plot(abs(avg),'--')
-            # breakpoint()
-            # import matplotlib.pyplot as plt;plt.ion()
-            # plt.plot(abs(fld))
-            # plt.plot(abs(drv))
-            # plt.plot(abs(fld - drv))
-            # breakpoint()
+            avg = (fld + drv) / 2
 
             #Append
             data.append(avg)
