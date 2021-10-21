@@ -14,9 +14,9 @@ import numpy as np
 import semp
 
 
-session = 'test'
+session = 'new_sommer'
 
-resolution = 30
+resolution = 40
 
 wafer_thick = 2.
 skin_metal = 'metal'
@@ -29,7 +29,7 @@ taper_angle = 0
 seam_dark = 10
 seam_lite = 25
 
-waves = [0.641, 0.660, 0.699, 0.725]
+waves = [0.641, 0.660, 0.699, 0.725][:1]
 
 ######################################
 
@@ -49,6 +49,8 @@ MEEP_params = {
     'skin_material':    skin_metal,
     'wafer_thick':      wafer_thick,
     'skin_thick':       skin_thick,
+
+    'is_sommerfeld':    True,
 
     # 'scallop_height':   scallop_height,
     # 'scallop_depth':    scallop_depth,

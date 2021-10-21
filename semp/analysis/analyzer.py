@@ -121,7 +121,7 @@ class Analyzer(object):
                 self.waves = f['waves'][()]
 
         #Shift y to put zero at edge
-        self.yy += self.prop.msim.geo.edge_y
+        self.yy += self.prop.msim.geo.edge_y - 0.5/self.prop.msim.resolution
 
     def load_field(self, comp, wave=None, is_vac=False, ind=None):
 
@@ -225,7 +225,7 @@ class Analyzer(object):
 ####	Plot Analyses ####
 ############################################
 
-    def show_image(self, comp, wave=None, is_phase=False, is_bbek=False):
+    def show_image(self, comp, wave=None, is_phase=False, is_bbek=False, vmax=None):
 
         #Load data
         data = self.get_data(comp, wave=wave, is_bbek=is_bbek)
@@ -237,7 +237,7 @@ class Analyzer(object):
             data = np.abs(data)
 
         #Plot
-        return self.plotter.plot_image(data, is_phase=is_phase, title=comp)
+        return data, self.plotter.plot_image(data, is_phase=is_phase, title=comp, vmax=vmax)
 
     def show_slice(self, comp, wave=None, is_phase=False, is_bbek=False):
         #Get index
@@ -253,7 +253,7 @@ class Analyzer(object):
             data = np.abs(data)
 
         #Plot
-        return self.plotter.plot_slice(data, is_phase=is_phase)
+        return data, self.plotter.plot_slice(data, is_phase=is_phase)
 
     def show_epsilon(self, with_lines=True):
 

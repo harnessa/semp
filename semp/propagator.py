@@ -150,6 +150,7 @@ class Propagator(object):
 
             #Get dielectric
             eps = sim.get_array(vol=vol, component=mp.Dielectric)
+            # eps = np.abs(sim.get_epsilon(self.msim.fcen0, vol=vol))
 
             #Get coordinates
             x,y,z,w = sim.get_array_metadata(dft_cell=dft_obj)

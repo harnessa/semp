@@ -14,6 +14,18 @@ import numpy as np
 import semp
 import matplotlib.pyplot as plt;plt.ion()
 
+# scallop_list = [
+#     [(0.152, 0.405), (0.762, 0.810)],
+#     [(0.095, 1.157), (0.762, 0.824)],
+#     [(-0.033, 1.900), (0.762, 0.767)]
+# ]
+
+scallop_list = [
+    [(0.205, 0.324), (0.762, 0.810)],
+    [(0.148, 1.157), (0.762, 0.824)],
+    [(0.0190, 1.900), (0.762, 0.767)]
+]
+
 MEEP_params = {
 
     ### Lab Properties  ###
@@ -29,13 +41,12 @@ MEEP_params = {
     'wafer_thick':      2.25,
     'skin_thick':       0.3,
 
-    'scallop_list':     [[(0.152, 0.405), (0.762, 0.810)], \
-        [(0.095, 1.157), (0.762, 0.824)], [(-0.033, 1.900), (0.762, 0.767)]],
+    # 'scallop_list':     scallop_list,
 
-    # 'scallop_height':   0.75,
-    # 'scallop_depth':    0.1,
+    'scallop_height':   0.75,
+    'scallop_depth':    0.1,
     # 'scallop_start':    0.,
-    # 'taper_angle':      6,
+    'taper_angle':      10,
     # 'shave_angle':      2,
 
     ### Numerics ###

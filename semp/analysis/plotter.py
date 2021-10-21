@@ -33,7 +33,7 @@ class Plotter(object):
 ####	Image Plot ####
 ############################################
 
-    def plot_image(self, data, is_phase=False, title=''):
+    def plot_image(self, data, is_phase=False, title='', vmax=None):
 
         sx = data.shape[1]/max(data.shape) * 10
         sy = data.shape[0]/max(data.shape) * 10
@@ -41,12 +41,12 @@ class Plotter(object):
         fig, axes = plt.subplots(1, figsize=(sx,sy))
 
         #Get image extent
-        extent = [self.alz.yy[-1], self.alz.yy[0], self.alz.xx[-1], self.alz.xx[0]]
+        extent = [self.alz.yy[0], self.alz.yy[-1], self.alz.xx[-1], self.alz.xx[0]]
         #Adjust for yee lattice
         extent = [x + 0.5/self.msim.resolution for x in extent]
 
         #Show image
-        out = axes.imshow(data, extent=extent)
+        out = axes.imshow(data, extent=extent, vmax=vmax)
 
         #Add substrate
         self.draw_substrate(axes)
@@ -128,26 +128,26 @@ class Plotter(object):
 
         #Widths
         lx = self.geo.lx - 2*self.geo.pmlx
-        ly = self.geo.ly - 2*self.geo.padpmly
+        ly = self.geo.ly - 2*self.geo.pmly
         wx = self.msim.wafer_thick
-        wy = self.geo.edge_y
+        wy = -self.geo.edge_y
 
         #Substrate box
         sub_box = np.array([
-            [wy,    -wx/2],
-            [ly/2., -wx/2],
-            [ly/2.,  wx/2],
-            [wy,     wx/2]
+            [wy,     -wx/2],
+            [-ly/2., -wx/2],
+            [-ly/2.,  wx/2],
+            [wy,      wx/2]
         ])
         self.overplot_eps_box(sub_box, axes, col='r')
 
         #Skin box
         if self.msim.skin_thick > 0.:
             skn_box = np.array([
-                [wy,    -wx/2 - self.msim.skin_thick],
-                [ly/2,  -wx/2 - self.msim.skin_thick],
-                [ly/2,   wx/2],
-                [wy,     wx/2]
+                [wy,     -wx/2 - self.msim.skin_thick],
+                [-ly/2,  -wx/2 - self.msim.skin_thick],
+                [-ly/2,   wx/2],
+                [wy,      wx/2]
             ])
             self.overplot_eps_box(skn_box,axes,col='m')
 

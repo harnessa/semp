@@ -16,6 +16,8 @@ import semp
 
 class Test_Sommerfeld(object):
 
+    is_debug = False
+
     ### HARDWIRED ###
     waves = [0.641, 0.725]
     pad = 4.
@@ -24,7 +26,7 @@ class Test_Sommerfeld(object):
     seam_lite = 10.
     resolution = 30
     atol = 0.02
-    do_plot = False and semp.mpi_size == 1
+    do_plot = is_debug and semp.mpi_size == 1
 
 ############################################
 ####	Tests ####
@@ -176,12 +178,14 @@ class Test_Sommerfeld(object):
 
         #Run simulation
         prop = semp.Propagator(MEEP_params, PROP_params)
-        prop.run_sim()
+        if not self.is_debug:
+            prop.run_sim()
 
-        # ##Debug Only
-        # if semp.mpi_size > 1:
-        #     prop.run_sim()
-        #     import sys;sys.exit(0)
+        ##Debug Only
+        if self.is_debug:
+            if semp.mpi_size > 1:
+                prop.run_sim()
+                import sys;sys.exit(0)
 
 ############################################
 ############################################
@@ -198,10 +202,6 @@ class Test_Sommerfeld(object):
         sez, shz, sey, shy = sdata
         aez, ahz, aey, ahy = adata
         dez, dhz, dey, dhy = ddata
-
-        #Print
-        print(f'\n{dez:.2e}, {dhz:.2e}, {dey:.2e}, {dhy:.2e}\n')
-        print(dez < self.atol and dhz < self.atol and dey < self.atol and dhy < self.atol)
 
         #Plot
         fig, axes = plt.subplots(2, 2, figsize=(9,9), sharex=True)
