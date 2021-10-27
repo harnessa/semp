@@ -135,7 +135,11 @@ class Test_Sommerfeld(object):
         dhy = np.abs(shy - ahy).mean()
 
         #Assert all fields are true
-        assert(dez < self.atol and dhz < self.atol and dey < self.atol and dhy < self.atol)
+        if not self.is_debug:
+            assert(dez < self.atol and dhz < self.atol and dey < self.atol and dhy < self.atol)
+        else:
+            print(dez < self.atol and dhz < self.atol and dey < self.atol and dhy < self.atol)
+            print(dez, dhz, dey, dhy)
 
         #Package
         adata = [aez, ahz, aey, ahy]

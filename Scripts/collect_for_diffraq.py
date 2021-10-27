@@ -20,7 +20,7 @@ waves = [641, 660, 699, 725]
 
 do_save = [False, True][1]
 mask = 'M12PX'
-save_ext = 'final'
+save_ext = 'final_test'
 save_dir = '/home/aharness/repos/diffraq/External_Data/Vector_Edges'
 
 #Figures

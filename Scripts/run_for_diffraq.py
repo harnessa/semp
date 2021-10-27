@@ -14,22 +14,22 @@ import numpy as np
 import semp
 
 
-session = 'new_sommer'
+session = 'gaps'
 
-resolution = 40
+resolution = 50
 
-wafer_thick = 2.
-skin_metal = 'metal'
-skin_thick = 0.25
+wafer_thick = 2.25
+skin_metal = 'Al'
+skin_thick = 0.3
 
 scallop_height = 0.6
 scallop_depth  = 0.1
 taper_angle = 0
 
-seam_dark = 10
-seam_lite = 25
+seam_dark = 15
+seam_lite = 35
 
-waves = [0.641, 0.660, 0.699, 0.725][:1]
+waves = [0.641, 0.660, 0.699, 0.725]
 
 ######################################
 
@@ -58,8 +58,8 @@ MEEP_params = {
 
     ### Numerics ###
     'resolution':       resolution,
-    'pml_all':          4,
-    'pad_all':          4,
+    'pml_all':          8,
+    'pad_all':          8,
 
 }
 

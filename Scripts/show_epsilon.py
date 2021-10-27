@@ -33,24 +33,22 @@ MEEP_params = {
 
     ### Mask Properties ###
     'sim_geometry':     'edge',
-    'seam_dark':        2,
+    'seam_dark':        10,
     'seam_lite':        2,
 
     'wafer_material':   'cSi',
-    'skin_material':    'metal',
+    'skin_material':    'Al',
     'wafer_thick':      2.25,
     'skin_thick':       0.3,
+    # 'gap_width':        35,
+    'wall_thick':       0.05,
 
-    # 'scallop_list':     scallop_list,
+    'scallop_list':     scallop_list,
 
-    'scallop_height':   0.75,
-    'scallop_depth':    0.1,
-    # 'scallop_start':    0.,
-    'taper_angle':      10,
-    # 'shave_angle':      2,
+    'scallop_ball':     0.025,
 
     ### Numerics ###
-    'resolution':       80,
+    'resolution':       40,
     'pml_all':          1,
     'pad_all':          1,
 

@@ -128,7 +128,7 @@ class Propagator(object):
         dft_obj = sim.add_dft_fields(fld_names, self.msim.freqs, where=vol)
 
         #Decay check
-        dcy_pt = mp.Vector3(self.msim.wafer_thick/2, self.msim.geo.non_pml_ly/2)
+        dcy_pt = self.msim.geo.decay_checkpoint
         dcy_cn = {'s':mp.Ez, 'p':mp.Hz}[pol]
 
         #Run sim

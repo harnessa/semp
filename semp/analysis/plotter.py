@@ -108,6 +108,7 @@ class Plotter(object):
 
         #Plot
         axes.plot(self.alz.yy, data, '-')
+        # axes.plot(self.alz.yy, data[::-1], '--')
         axes.axvline(0, color='k', linestyle=':')
 
         #Labels
@@ -158,9 +159,8 @@ class Plotter(object):
             #Corner points
             curx = cnrs[:,0][[i,(i+1)%ncnrs]]
             cury = cnrs[:,1][[i,(i+1)%ncnrs]]
-            #Shift if edge
-            if self.geo.is_edge:
-                curx += self.geo.edge_y
+            #Shift to edge
+            curx += self.geo.edge_y
             #Plot
             axes.plot(curx, cury , color=col)
 

@@ -26,6 +26,10 @@ class Geometry_2D(object):
 ############################################
 
     def initialize(self):
+        #Clear taper angle if scallops given
+        if len(self.parent.scallop_list) > 0:
+            self.parent.taper_angle = 0
+
         #Copy parameters over from parent
         for k in semp.utils.def_params['MEEP_params'].keys():
             setattr(self, k, getattr(self.parent, k))
@@ -55,7 +59,7 @@ class Geometry_2D(object):
             self.ly = 2*self.padpmly + self.seam_dark + self.seam_lite
         else:
             self.ly = 2*(self.padpmly + self.seam_dark) + self.gap_width
-        self.edge_y = self.ly/2 - (self.padpmly + self.seam_dark)
+        self.edge_y = self.ly/2 - (self.padpmly + self.seam_dark) #- self.wall_thick
         self.non_pml_ly = self.ly - 2*self.pmly
 
         ## z ##
@@ -64,6 +68,12 @@ class Geometry_2D(object):
 
         ## cell ##
         self.cell_size = mp.Vector3(self.lx, self.ly, self.lz)
+
+        #Decay checkpoint
+        if self.is_edge:
+            self.decay_checkpoint = mp.Vector3(self.wafer_thick/2, self.non_pml_ly/2)
+        else:
+            self.decay_checkpoint = mp.Vector3(self.wafer_thick/2, -self.gap_width/4)
 
 ############################################
 ############################################
@@ -173,9 +183,42 @@ class Geometry_2D(object):
                 #Get current size and center
                 cur_cen, cur_sze = scallop
                 scl_sze = mp.Vector3(cur_sze[1], cur_sze[0], zdepth)
-                scl_cen = mp.Vector3(-self.wafer_thick/2. + cur_cen[1], y1+cur_cen[0])
-                #Add ellipsoid
+                scl_cen = mp.Vector3(-self.wafer_thick/2. + cur_cen[1], -y1+cur_cen[0])
+                #Add side walls
+                if self.wall_thick > 0:
+                    #Side wall ellipsoid
+                    geometry += [mp.Ellipsoid(material=skn_mat, size=scl_sze, center=scl_cen)]
+                    #Shrink air cylinder's size
+                    scl_sze -= mp.Vector3(2*self.wall_thick, 2*self.wall_thick, 0)
+
+                #Add air ellipsoid
                 geometry += [mp.Ellipsoid(material=mp.air, size=scl_sze, center=scl_cen)]
+
+            #Clear side walls scallops
+            if self.wall_thick > 0:
+                #Maximum scallop width + height
+                msw = np.max([scl[1][0] for scl in self.scallop_list])
+                msh = np.max([scl[1][1] for scl in self.scallop_list])
+                #Vertical clear
+                p0v = waf_verts[2] - mp.Vector3(self.skin_thick + self.oxide_thick)
+                p1v = waf_verts[3] + mp.Vector3(self.wall_thick)
+                bsw_vv = [p0v, p0v + mp.Vector3(y=msw), p1v + mp.Vector3(y=msw), p1v]
+                geometry += [mp.Prism(bsw_vv, zdepth, material=mp.air)]
+                #Horizontal clear
+                p0h = waf_verts[3] - mp.Vector3(x=-1/self.parent.resolution,y=msw/2)
+                bsw_hv = [p0h, p0h + mp.Vector3(y=msw), p0h + mp.Vector3(msh,msw), \
+                    p0h + mp.Vector3(msh)]
+                geometry += [mp.Prism(bsw_hv, zdepth, material=mp.air)]
+
+            #Scallop ball
+            if self.scallop_ball > 0:
+                #Get bottom of first scallop #TODO: add to other scallops
+                cur_cen, cur_sze = self.scallop_list[0]
+                scl_cen = mp.Vector3(-self.wafer_thick/2. + cur_cen[1] + \
+                    cur_sze[1]/2 - self.scallop_ball*2, -y1)
+                #Add ball
+                geometry += [mp.Cylinder(material=skn_mat, \
+                    radius=self.scallop_ball, center=scl_cen, height=zdepth)]
 
         elif self.scallop_depth > 0:
             #Number of scallops

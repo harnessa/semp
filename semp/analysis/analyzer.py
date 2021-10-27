@@ -76,7 +76,7 @@ class Analyzer(object):
         if obs_x is None:
             obs_x = self.obs_distance
 
-        return np.argmin(np.abs(self.xx - 0.5/self.prop.msim.resolution - obs_x))
+        return np.argmin(np.abs(self.xx - obs_x))
 
 ############################################
 ############################################
@@ -96,7 +96,11 @@ class Analyzer(object):
 
         #Turn subtract 1 if braunbek
         if is_bbek:
-            fld -= np.heaviside(self.yy, 1)
+            if self.prop.msim.geo.is_edge:
+                fld -= np.heaviside(self.yy, 0)
+            else:
+                fld -= np.heaviside(self.yy, 0) * \
+                    np.heaviside(self.prop.msim.gap_width - self.yy,0)
 
         return fld
 
@@ -121,7 +125,7 @@ class Analyzer(object):
                 self.waves = f['waves'][()]
 
         #Shift y to put zero at edge
-        self.yy += self.prop.msim.geo.edge_y - 0.5/self.prop.msim.resolution
+        self.yy += self.prop.msim.geo.edge_y
 
     def load_field(self, comp, wave=None, is_vac=False, ind=None):
 
@@ -206,12 +210,42 @@ class Analyzer(object):
         for data_list in data_names:
 
             #Get data
-            fld = self.get_data(data_list[0], wave=wave, ind=xind, is_bbek=True)
-            drv = self.get_data(data_list[1], wave=wave, ind=xind, is_bbek=True)
+            fld2 = self.get_data(data_list[0], wave=wave, ind=xind, is_bbek=True)
+            drv2 = self.get_data(data_list[1], wave=wave, ind=xind, is_bbek=True)
 
-            #Combine fields for Braunbek difference field
-            avg = (fld + drv) / 2
+            avg2 = (fld2 + drv2) / 2
 
+            if True:
+
+                #Load data
+                fld = self.load_field(data_list[0], wave=wave, ind=xind)
+                vac = self.load_field(data_list[0], wave=wave, ind=xind, is_vac=True)
+
+                drv = self.load_field(data_list[1], wave=wave, ind=xind)
+                vdr = self.load_field(data_list[1], wave=wave, ind=xind, is_vac=True)
+
+                #Combine E+H
+                drv_sign = {'ez':-1, 'hz':1}[data_list[0]]
+                # avg = fld + drv/2*drv_sign
+                # vvg = vac + vdr/2*drv_sign
+
+                #Normalize
+                # avg /= vvg
+
+                avg = fld/vac + drv_sign*(drv/vdr - fld/vac) * (vdr/vac)/2
+
+                #Compute Braunbek field
+                avg -= np.heaviside(self.yy, 0)
+
+                # import matplotlib.pyplot as plt;plt.ion()
+                # plt.cla()
+                # # plt.plot(abs(fld2))
+                # # plt.plot(abs(drv2))
+                # plt.plot(np.angle(avg))
+                # plt.plot(np.angle(avg2), '--')
+
+                # breakpoint()
+                
             #Append
             data.append(avg)
 

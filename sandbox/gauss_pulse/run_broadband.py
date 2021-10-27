@@ -9,8 +9,8 @@ rank = MPI.COMM_WORLD.rank
 seam_dark = 5
 seam_lite = 10
 resolution = 30
-pml = 12
-pad = 12
+pml = 4
+pad = 4
 
 waves = np.array([0.641, 0.660, 0.699, 0.725])
 fcens = 1/waves
@@ -137,12 +137,14 @@ dft_obj = sim.add_dft_fields([mp.Ez], fcens, where=nonpml_vol)
 pt = mp.Vector3(x=1)
 sim.run(until_after_sources=mp.stop_when_fields_decayed(dt=50, pt=pt, c=mp.Ez, decay_by=1e-3))
 all_ez = [sim.get_dft_array(dft_obj, mp.Ez, i) for i in range(len(waves))]
+all_hy = [sim.get_dft_array(dft_obj, mp.Hy, i) for i in range(len(waves))]
 
 MPI.COMM_WORLD.Barrier()
 
 if rank == 0:
     print(f'Time 2: {time.perf_counter()-tik:.3f}')
 
-    with h5py.File('./saves/si_broad_ez_pml12.h5', 'w') as f:
+    with h5py.File('./saves/si_broad_ez_injHy.h5', 'w') as f:
         f.create_dataset('waves', data=waves)
         f.create_dataset('ez', data=all_ez)
+        f.create_dataset('hy', data=all_hy)
