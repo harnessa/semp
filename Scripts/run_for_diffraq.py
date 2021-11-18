@@ -14,9 +14,9 @@ import numpy as np
 import semp
 
 
-session = 'gaps'
+session = 'test'
 
-resolution = 50
+resolution = 20
 
 wafer_thick = 2.25
 skin_metal = 'Al'

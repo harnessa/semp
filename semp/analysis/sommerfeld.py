@@ -10,21 +10,19 @@ Description: Class to calculate Sommerfeld's analytic solution to edge diffracti
 License: Refer to $pkg_home_dir/LICENSE
 """
 
-import semp
 import numpy as np
 from scipy.special import fresnel
 
 class Sommerfeld(object):
 
     def __init__(self, params):
-        self.util = semp.utils.Utilities()
         #Initialize
         self.initialize(params)
 
     def initialize(self, params, prop=None):
         def_pms = {
             'wave':     0.641,
-            'phi0':     np.pi/2.
+            'phi0':     np.pi/2,
         }
 
         #Set default parameters

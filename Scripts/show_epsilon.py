@@ -14,12 +14,6 @@ import numpy as np
 import semp
 import matplotlib.pyplot as plt;plt.ion()
 
-# scallop_list = [
-#     [(0.152, 0.405), (0.762, 0.810)],
-#     [(0.095, 1.157), (0.762, 0.824)],
-#     [(-0.033, 1.900), (0.762, 0.767)]
-# ]
-
 scallop_list = [
     [(0.205, 0.324), (0.762, 0.810)],
     [(0.148, 1.157), (0.762, 0.824)],
@@ -33,24 +27,23 @@ MEEP_params = {
 
     ### Mask Properties ###
     'sim_geometry':     'edge',
-    'seam_dark':        10,
-    'seam_lite':        2,
+    'seam_dark':        15,
+    'seam_lite':        35,
 
     'wafer_material':   'cSi',
     'skin_material':    'Al',
     'wafer_thick':      2.25,
     'skin_thick':       0.3,
-    # 'gap_width':        35,
-    'wall_thick':       0.05,
+    'wall_thick':       0.01,
 
     'scallop_list':     scallop_list,
 
-    'scallop_ball':     0.025,
+    # 'scallop_ball':     0.1,
 
     ### Numerics ###
-    'resolution':       40,
-    'pml_all':          1,
-    'pad_all':          1,
+    'resolution':       20,
+    'pml_all':          8,
+    'pad_all':          8,
 
 }
 

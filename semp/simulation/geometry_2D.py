@@ -59,7 +59,7 @@ class Geometry_2D(object):
             self.ly = 2*self.padpmly + self.seam_dark + self.seam_lite
         else:
             self.ly = 2*(self.padpmly + self.seam_dark) + self.gap_width
-        self.edge_y = self.ly/2 - (self.padpmly + self.seam_dark) #- self.wall_thick
+        self.edge_y = self.ly/2 - (self.padpmly + self.seam_dark)
         self.non_pml_ly = self.ly - 2*self.pmly
 
         ## z ##
@@ -148,7 +148,7 @@ class Geometry_2D(object):
         skcx = -(self.wafer_thick + self.skin_thick)/2.
         skcy = -y0 + sksy/2.
         skcz = 0
-        if not np.isclose(zdepth, mp.inf):
+        if zdepth < 10000:
             skcz = zdepth/2
         skn_sze = mp.Vector3(self.skin_thick, sksy, zdepth)
         skn_cen = mp.Vector3(skcx, skcy, skcz)
@@ -215,7 +215,7 @@ class Geometry_2D(object):
                 #Get bottom of first scallop #TODO: add to other scallops
                 cur_cen, cur_sze = self.scallop_list[0]
                 scl_cen = mp.Vector3(-self.wafer_thick/2. + cur_cen[1] + \
-                    cur_sze[1]/2 - self.scallop_ball*2, -y1)
+                    cur_sze[1]/2, -y1)
                 #Add ball
                 geometry += [mp.Cylinder(material=skn_mat, \
                     radius=self.scallop_ball, center=scl_cen, height=zdepth)]

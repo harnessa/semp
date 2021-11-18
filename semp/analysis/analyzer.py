@@ -76,7 +76,8 @@ class Analyzer(object):
         if obs_x is None:
             obs_x = self.obs_distance
 
-        return np.argmin(np.abs(self.xx - obs_x))
+        #Return the first index below wafer
+        return np.where(self.xx >= obs_x)[0][0]
 
 ############################################
 ############################################
@@ -94,7 +95,7 @@ class Analyzer(object):
         if not np.allclose(np.abs(vac),0):
             fld /= vac
 
-        #Turn subtract 1 if braunbek
+        #Subtract 1 if braunbek
         if is_bbek:
             if self.prop.msim.geo.is_edge:
                 fld -= np.heaviside(self.yy, 0)
@@ -210,42 +211,11 @@ class Analyzer(object):
         for data_list in data_names:
 
             #Get data
-            fld2 = self.get_data(data_list[0], wave=wave, ind=xind, is_bbek=True)
-            drv2 = self.get_data(data_list[1], wave=wave, ind=xind, is_bbek=True)
+            fld = self.get_data(data_list[0], wave=wave, ind=xind, is_bbek=True)
+            drv = self.get_data(data_list[1], wave=wave, ind=xind, is_bbek=True)
 
-            avg2 = (fld2 + drv2) / 2
+            avg = (fld + drv) / 2
 
-            if True:
-
-                #Load data
-                fld = self.load_field(data_list[0], wave=wave, ind=xind)
-                vac = self.load_field(data_list[0], wave=wave, ind=xind, is_vac=True)
-
-                drv = self.load_field(data_list[1], wave=wave, ind=xind)
-                vdr = self.load_field(data_list[1], wave=wave, ind=xind, is_vac=True)
-
-                #Combine E+H
-                drv_sign = {'ez':-1, 'hz':1}[data_list[0]]
-                # avg = fld + drv/2*drv_sign
-                # vvg = vac + vdr/2*drv_sign
-
-                #Normalize
-                # avg /= vvg
-
-                avg = fld/vac + drv_sign*(drv/vdr - fld/vac) * (vdr/vac)/2
-
-                #Compute Braunbek field
-                avg -= np.heaviside(self.yy, 0)
-
-                # import matplotlib.pyplot as plt;plt.ion()
-                # plt.cla()
-                # # plt.plot(abs(fld2))
-                # # plt.plot(abs(drv2))
-                # plt.plot(np.angle(avg))
-                # plt.plot(np.angle(avg2), '--')
-
-                # breakpoint()
-                
             #Append
             data.append(avg)
 
