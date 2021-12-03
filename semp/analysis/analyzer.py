@@ -105,6 +105,25 @@ class Analyzer(object):
 
         return fld
 
+    def get_fardata(self, comp, wave=None, is_bbek=False):
+        #Load data
+        fld = self.load_farfield(comp, wave=wave)
+        vac = self.load_farfield(comp, wave=wave, is_vac=True)
+
+        #Normalize by vacuum field
+        if not np.allclose(np.abs(vac),0):
+            fld /= vac
+
+        #Subtract 1 if braunbek
+        if is_bbek:
+            if self.prop.msim.geo.is_edge:
+                fld -= np.heaviside(self.far_yy, 0)
+            else:
+                fld -= np.heaviside(self.far_yy, 0) * \
+                    np.heaviside(self.prop.msim.gap_width - self.far_yy,0)
+
+        return fld
+
 ############################################
 ############################################
 
@@ -128,11 +147,14 @@ class Analyzer(object):
         #Shift y to put zero at edge
         self.yy += self.prop.msim.geo.edge_y
 
-    def load_field(self, comp, wave=None, is_vac=False, ind=None):
+        #Build farfield coordinates
+        self.far_xx = self.prop.msim.farfield_z*self.util.m2mu
+        self.far_yy = np.linspace(-0.5, 0.5, self.prop.msim.farfield_npts) * \
+            self.prop.msim.farfield_width*self.util.m2mu + self.prop.msim.geo.edge_y
 
-        #Fix ind
-        if ind is None:
-            ind = slice(None)
+    ############################################
+
+    def get_pol_wind(self, comp, wave, is_vac):
 
         #lowercase
         comp = comp.lower()
@@ -156,6 +178,19 @@ class Analyzer(object):
                 print('\nWavelength is not close!\n')
                 breakpoint()
 
+        return pol, wind, comp, vac_ext
+
+    ############################################
+
+    def load_field(self, comp, wave=None, is_vac=False, ind=None):
+
+        #Fix ind
+        if ind is None:
+            ind = slice(None)
+
+        #Get polarization and wave index
+        pol, wind, comp, vac_ext = self.get_pol_wind(comp, wave, is_vac)
+
         #Filename
         fname = f'{self.data_dir}/{vac_ext}fields_{pol}.h5'
 
@@ -169,6 +204,22 @@ class Analyzer(object):
         #Add shape to vacuum to divide by fld
         if is_vac and len(data.shape) != 0:
             data = data[:,None]
+
+        return data
+
+    ############################################
+
+    def load_farfield(self, comp, wave=None, is_vac=False):
+
+        #Get polarization and wave index
+        pol, wind, comp, vac_ext = self.get_pol_wind(comp, wave, is_vac)
+
+        #Filename
+        fname = f'{self.data_dir}/{vac_ext}farfields_{pol}.h5'
+
+        #Load data
+        with h5py.File(fname, 'r') as f:
+            data = f[f'{comp.capitalize()}'][:,wind]
 
         return data
 

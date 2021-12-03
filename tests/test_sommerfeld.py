@@ -16,7 +16,7 @@ import semp
 
 class Test_Sommerfeld(object):
 
-    is_debug = False
+    is_debug = True
 
     ### HARDWIRED ###
     waves = [0.641, 0.725]
@@ -54,11 +54,15 @@ class Test_Sommerfeld(object):
                 #Loop through and check with and without braunbek
                 for is_bbek in [False, True]:
 
-                    #Check simulation
-                    self.check_simulation(wave, alz, is_bbek)
+                    # #Check simulation
+                    # self.check_simulation(wave, alz, is_bbek)
+                    #
+                    # #Check analyzer
+                    # self.check_analyzer(wave, alz, is_bbek)
 
-                    #Check analyzer
-                    self.check_analyzer(wave, alz, is_bbek)
+                    #Check farfield
+                    if obs_x == 0:
+                        self.check_farfield(wave, alz, is_bbek)
 
     def check_simulation(self, wave, alz, is_bbek):
 
@@ -114,15 +118,36 @@ class Test_Sommerfeld(object):
 
     ############################################
 
-    def compare_to_sommerfeld(self, wave, sdata, xind, alz, is_bbek):
+    def check_farfield(self, wave, alz, is_bbek):
+
+        #Load normalized data
+        data_list = ['ez','hz','ey','hy']
+        sdata = [alz.get_fardata(dn, wave=wave, is_bbek=is_bbek) for dn in data_list]
+
+        #Compare to sommerfeld
+        adata, ddata = self.compare_to_sommerfeld(wave, sdata, None, alz, \
+            is_bbek, axx=alz.far_xx, ayy=alz.far_yy)
+
+        #Plot?
+        if self.do_plot:
+            fig, axes, fig2, axes2 = self.show_plot(sdata, adata, ddata, alz.far_yy, xlim=alz.far_yy.max())
+            breakpoint()
+
+    ############################################
+
+    def compare_to_sommerfeld(self, wave, sdata, xind, alz, is_bbek, axx=None, ayy=None):
 
         #Load sommerfeld
         som = semp.analysis.Sommerfeld({'wave':wave})
 
-        #Get sommerfeld solution
-        axx = alz.xx[xind]
+        #Get coords
+        if axx is None:
+            axx = alz.xx[xind]
+        if ayy is None:
+            ayy = alz.yy
 
-        aex, aey, aez, ahx, ahy, ahz = som.get_sommerfeld_solution(axx, alz.yy, \
+        #Get sommerfeld solution
+        aex, aey, aez, ahx, ahy, ahz = som.get_sommerfeld_solution(axx, ayy, \
             is_bbek=is_bbek)
 
         #Unpackage
@@ -159,6 +184,8 @@ class Test_Sommerfeld(object):
             ### Lab Properties  ###
             'polars':           ['s', 'p'],
             'waves':            self.waves,
+            'farfield_z':       10,
+            'farfield_width':   0.6,
 
             ### Mask Properties ###
             'sim_geometry':     'edge',
@@ -178,6 +205,7 @@ class Test_Sommerfeld(object):
             'verbose':          True,
             'base_dir':         f'{semp.tmp_dir}/tests',
             'session':          'sommer',
+            'with_farfield':    True,
         }
 
         #Run simulation
@@ -198,7 +226,7 @@ class Test_Sommerfeld(object):
 ####	Plotting ####
 ############################################
 
-    def show_plot(self, sdata, adata, ddata, yy):
+    def show_plot(self, sdata, adata, ddata, yy, xlim=3):
 
         import matplotlib.pyplot as plt;plt.ion()
 
@@ -221,7 +249,7 @@ class Test_Sommerfeld(object):
 
         axes[0,0].set_ylabel('Amplitude')
         axes[1,0].set_ylabel('Phase')
-        axes[0,0].set_xlim(-3, 3)
+        axes[0,0].set_xlim(-xlim, xlim)
         for i in range(2):
             axes[0,i].axhline(0.5, color='k', linestyle=':')
             axes[0,i].legend()
@@ -241,7 +269,7 @@ class Test_Sommerfeld(object):
 
         axes2[0,0].set_ylabel('Amplitude')
         axes2[1,0].set_ylabel('Phase')
-        axes2[0,0].set_xlim(-3, 3)
+        axes2[0,0].set_xlim(-xlim, xlim)
         for i in range(2):
             axes2[0,i].axhline(0.5, color='k', linestyle=':')
             axes2[0,i].legend()

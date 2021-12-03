@@ -32,6 +32,9 @@ def_params_MEEP = {
     'source_distance':  27.5,       # Units: [m], Light source distance for diverging beam
     'source_offset_y':  0,          # Units: [m], Light source center in y
     'source_offset_z':  0,          # Units: [m], Light source center in z
+    'farfield_z':       10,         # Units: [m], farfield distance
+    'farfield_width':   2e-3,       # Units: [m], farfield width
+    'farfield_npts':    500,        # Number of farfield points to save
 
     ### Mask Properties ###
     'sim_geometry':     'edge',     # Geometry of simulation. Options: [gap, edge, corner, vacuum]
@@ -97,6 +100,7 @@ def_params_PROP = {
     'session':          '',         # Session: save under 'base_dir/session'
     'verbose':          True,       # Print statements?
     'save_all':         True,
+    'with_farfield':    False,      #Save farfield data?
 }
 
 ##############################################

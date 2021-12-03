@@ -15,7 +15,7 @@ import semp
 import matplotlib.pyplot as plt;plt.ion()
 
 params = {
-    'session':          'final_model/m12px_gaps_w223',
+    'session':          'final_model/m12px',
     'obs_distance':     0.,
 }
 

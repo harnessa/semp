@@ -112,8 +112,10 @@ class Propagator(object):
         #Get fields to output
         if self.save_all:
             fld_names = {'s':[mp.Ez, mp.Hx, mp.Hy], 'p':[mp.Hz, mp.Ex, mp.Ey]}[pol]
+            far_names = {'s':['Ez', 'Hx', 'Hy'], 'p':['Hz', 'Ex', 'Ey']}[pol]
         else:
             fld_names = {'s':[mp.Ez, mp.Hy], 'p':[mp.Hz, mp.Ey]}[pol]
+            far_names = {'s':['Ez', 'Hy'], 'p':['Hz', 'Ey']}[pol]
 
         #Volume to save (non-PML)
         vlx = self.msim.geo.non_pml_lx
@@ -126,6 +128,13 @@ class Propagator(object):
 
         #Add DFT fields
         dft_obj = sim.add_dft_fields(fld_names, self.msim.freqs, where=vol)
+
+        #Add near2far
+        if self.with_farfield:
+            n2f_cen = mp.Vector3(x=self.msim.geo.far_pt_x)
+            n2f_sze = mp.Vector3(y=self.msim.geo.non_pml_ly)
+            n2f_vol = mp.Near2FarRegion(center=n2f_cen, size=n2f_sze)
+            n2f_obj = sim.add_near2far(self.msim.freqs, n2f_vol)
 
         #Decay check
         dcy_pt = self.msim.geo.decay_checkpoint
@@ -140,6 +149,28 @@ class Propagator(object):
 
         #Output DFT fields
         sim.output_dft(dft_obj, dft_name)
+
+        #Get far fields
+        if self.with_farfield:
+            far_cen = mp.Vector3(self.msim.farfield_z * self.util.m2mu)
+            far_sze = mp.Vector3(y=self.msim.farfield_width * self.util.m2mu)
+            ff_res = self.msim.farfield_npts/far_sze.y
+
+            #Get fields
+            farfields = sim.get_farfields(n2f_obj, ff_res, center=far_cen, size=far_sze)
+
+            #Save farfields
+            if semp.zero_rank:
+                n2f_name = f'{self.logger.data_dir}/{["", "vac-"][int(is_vac)]}farfields_{pol}.h5'
+                with h5py.File(n2f_name, 'w') as f:
+                    f.create_dataset('freqs', data=self.msim.freqs)
+                    f.create_dataset('width', data=self.msim.farfield_width)
+                    f.create_dataset('distance', data=self.msim.farfield_z)
+                    for fn in far_names:
+                        f.create_dataset(fn, data=farfields[fn])
+
+            #Cleanup
+            del farfields
 
         #Output times
         tname = f'{self.logger.data_dir}/{["", "vac-"][int(is_vac)]}times_{pol}'

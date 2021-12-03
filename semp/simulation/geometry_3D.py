@@ -108,10 +108,10 @@ class Geometry_3D(Geometry_2D):
         if self.with_broken_corner:
             geometry += self.add_broken_corner(eblk, edge1, edge2)
 
-        #Shift by 1 resolution element
-        geometry = self.shift_edge(geometry, 'x', -1/self.resolution)
-        geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
-        geometry = self.shift_edge(geometry, 'z', -1/self.resolution)
+        # #Shift by 1 resolution element
+        # geometry = self.shift_edge(geometry, 'x', -1/self.resolution)
+        # geometry = self.shift_edge(geometry, 'y', -1/self.resolution)
+        # geometry = self.shift_edge(geometry, 'z', -1/self.resolution)
 
         return geometry
 

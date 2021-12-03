@@ -52,6 +52,7 @@ class Geometry_2D(object):
         ## x ##
         self.lx = 2*self.padpmlx + self.wafer_thick
         self.source_x = -self.lx/2. + self.pmlx
+        self.far_pt_x = self.lx/2 - self.pmlx - self.padx/2
         self.non_pml_lx = self.lx - 2*self.pmlx
 
         ## y ##
