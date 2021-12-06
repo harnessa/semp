@@ -44,6 +44,23 @@ class Geometry_2D(object):
         #Dimensions
         self.ndims = 2
 
+        #Get initial grid size
+        lx0 = 2*(self.padx + self.pmlx) + self.wafer_thick
+        if self.is_edge:
+            delta_y = self.seam_dark + self.seam_lite
+        else:
+            delta_y = 2*self.seam_dark + self.gap_width
+        ly0 = 2*(self.pady + self.pmly) + delta_y
+
+        #Make sure integer number of pixels
+        if (lx0 * self.resolution) % 1 != 0:
+            self.padx = np.ceil(lx0*self.resolution)/self.resolution/2 - \
+                self.wafer_thick/2 - self.pmlx
+
+        if (ly0 * self.resolution) % 1 != 0:
+            self.pady = (np.ceil(ly0*self.resolution)/self.resolution - \
+                delta_y - 2*self.pmly) / 2
+
         #Combine pml and pad
         self.padpmlx = self.padx + self.pmlx
         self.padpmly = self.pady + self.pmly
@@ -57,9 +74,10 @@ class Geometry_2D(object):
 
         ## y ##
         if self.is_edge:
-            self.ly = 2*self.padpmly + self.seam_dark + self.seam_lite
+            delta_y = self.seam_dark + self.seam_lite
         else:
-            self.ly = 2*(self.padpmly + self.seam_dark) + self.gap_width
+            delta_y = 2*self.seam_dark + self.gap_width
+        self.ly = 2*self.padpmly + delta_y
         self.edge_y = self.ly/2 - (self.padpmly + self.seam_dark)
         self.non_pml_ly = self.ly - 2*self.pmly
 

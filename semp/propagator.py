@@ -90,16 +90,16 @@ class Propagator(object):
         #Loop over polarizations
         for pol in self.msim.polars:
 
-            #Loop over vacuum
-            for is_vac in [True, False]:
+            #Run sim with wafer
+            waf_run_time = self.run_single_to_end(pol, False, None, get_meta)
 
-                #Run sim
-                self.run_single_to_end(pol, is_vac, get_meta)
+            #Run sim in vacuum
+            vac_run_time = self.run_single_to_end(pol, True, waf_run_time, get_meta)
 
             #Turn off flag
             get_meta = False
 
-    def run_single_to_end(self, pol, is_vac, get_meta):
+    def run_single_to_end(self, pol, is_vac, run_time, get_meta):
 
         #Build to simulation
         sim = self.msim.build_sim(pol=pol, is_vac=is_vac)
@@ -141,14 +141,31 @@ class Propagator(object):
         dcy_cn = {'s':mp.Ez, 'p':mp.Hz}[pol]
 
         #Run sim
-        sim.run(until_after_sources=mp.stop_when_fields_decayed( \
-            dt=self.msim.decay_dt, pt=dcy_pt, c=dcy_cn, decay_by=self.msim.decay_by))
+        if is_vac:
+            #Run vacuum sim to same time as original simulation
+            sim.run(until=run_time)
+
+        else:
+            #Run wafer sim until decays
+            sim.run(until_after_sources=mp.stop_when_fields_decayed( \
+                dt=self.msim.decay_dt, pt=dcy_pt, c=dcy_cn, decay_by=self.msim.decay_by))
 
         #Synchronize magnetic fields
         sim.fields.synchronize_magnetic_fields()
 
         #Output DFT fields
         sim.output_dft(dft_obj, dft_name)
+
+        #Save simulation time
+        sim_time = sim.meep_time()
+        sim_timesteps = sim_time / (self.msim.courant / self.msim.resolution)
+        if semp.zero_rank:
+            tname =  f'{self.logger.data_dir}/{["", "vac-"][int(is_vac)]}simtime_{pol}.h5'
+            with h5py.File(tname, 'w') as f:
+                f.create_dataset('sim_time', data=sim_time)
+                f.create_dataset('sim_timesteps', data=sim_timesteps)
+                f.create_dataset('courant', data=self.msim.courant)
+                f.create_dataset('resolution', data=self.msim.resolution)
 
         #Get far fields
         if self.with_farfield:
@@ -212,6 +229,9 @@ class Propagator(object):
         #Reset meep
         sim.reset_meep()
 
+        #Return simulation time
+        return sim_time
+
 ############################################
 ############################################
 
@@ -223,10 +243,12 @@ class Propagator(object):
         #Load movie maker
         self.movie_maker = semp.analysis.Movie_Maker(self)
 
-        #Run sim with wafer
-        self.run_single_movie()
+        #Loop over polarizations
+        for pol in self.msim.polars:
+            #Run sim with wafer
+            self.run_single_movie(pol)
 
-    def run_single_movie(self):
+    def run_single_movie(self, pol):
         #Is vacuum?
         is_vac = self.msim.sim_geometry == 'vacuum'
 
@@ -239,13 +261,15 @@ class Propagator(object):
 
         #Get filename
         vac_ext = ['','vac_'][is_vac]
-        filename = f'{vac_ext}movie_{self.msim.src_comp_name}{self.logger.log_ext}'
+        fld_name = {'s':'ez', 'p':'hz'}[pol]
+        src_comp = {'s':mp.Ez, 'p':mp.Hz}[pol]
+        filename = f'{vac_ext}movie_{fld_name}'
 
         #Function to output epsilon
         eps_func = mp.at_beginning(mp.output_epsilon)
 
         #Function to save field (appended) to h5 file
-        if self.msim.polarization == 's':
+        if pol == 's':
             fld_func = mp.output_efield_z
         else:
             fld_func = mp.output_hfield_z
@@ -254,7 +278,7 @@ class Propagator(object):
         #Function to save png files
         png_opts = "-Zc dkbluered -a yarg -C $EPS"
         png_func = mp.at_every(self.msim.save_dt, \
-            mp.output_png(self.msim.src_comp, png_opts, rm_h5=True))
+            mp.output_png(src_comp, png_opts, rm_h5=True))
 
         #Output function to save data
         out_funcs = [eps_func, h5_func, png_func]
@@ -266,7 +290,7 @@ class Propagator(object):
         sim.reset_meep()
 
         #Create movie
-        self.movie_maker.make_movie(filename)
+        # self.movie_maker.make_movie(filename)
 
 ############################################
 ############################################

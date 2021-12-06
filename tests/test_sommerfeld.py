@@ -16,7 +16,7 @@ import semp
 
 class Test_Sommerfeld(object):
 
-    is_debug = True
+    is_debug = False
 
     ### HARDWIRED ###
     waves = [0.641, 0.725]
@@ -54,15 +54,15 @@ class Test_Sommerfeld(object):
                 #Loop through and check with and without braunbek
                 for is_bbek in [False, True]:
 
-                    # #Check simulation
-                    # self.check_simulation(wave, alz, is_bbek)
-                    #
-                    # #Check analyzer
-                    # self.check_analyzer(wave, alz, is_bbek)
+                    #Check simulation
+                    self.check_simulation(wave, alz, is_bbek)
 
-                    #Check farfield
-                    if obs_x == 0:
-                        self.check_farfield(wave, alz, is_bbek)
+                    #Check analyzer
+                    self.check_analyzer(wave, alz, is_bbek)
+
+                    # #Check farfield
+                    # if obs_x == 0:
+                    #     self.check_farfield(wave, alz, is_bbek)
 
     def check_simulation(self, wave, alz, is_bbek):
 
@@ -205,7 +205,7 @@ class Test_Sommerfeld(object):
             'verbose':          True,
             'base_dir':         f'{semp.tmp_dir}/tests',
             'session':          'sommer',
-            'with_farfield':    True,
+            'with_farfield':    False,
         }
 
         #Run simulation
