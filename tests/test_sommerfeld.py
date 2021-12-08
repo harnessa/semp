@@ -16,7 +16,7 @@ import semp
 
 class Test_Sommerfeld(object):
 
-    is_debug = False
+    is_debug = True
 
     ### HARDWIRED ###
     waves = [0.641, 0.725]
@@ -69,15 +69,21 @@ class Test_Sommerfeld(object):
         #Find index corresponding to observation distance (account for Yee lattice)
         xind = np.argmin(np.abs(alz.xx - 0.5/alz.prop.msim.resolution - alz.obs_distance))
 
-        #Load and normalize data
-        sez = alz.load_field('ez', wave=wave, ind=xind) / \
-            alz.load_field('ez', wave=wave, ind=xind, is_vac=True)
-        shz = alz.load_field('hz', wave=wave, ind=xind) / \
-            alz.load_field('hz', wave=wave, ind=xind, is_vac=True)
-        sey = alz.load_field('ey', wave=wave, ind=xind) / \
-            alz.load_field('ey', wave=wave, ind=xind, is_vac=True)
-        shy = alz.load_field('hy', wave=wave, ind=xind) / \
-            alz.load_field('hy', wave=wave, ind=xind, is_vac=True)
+        #Load data
+        sez, twez = alz.load_field('ez', wave=wave, ind=xind)
+        vez, tvez = alz.load_field('ez', wave=wave, ind=xind, is_vac=True)
+        shz, twhz = alz.load_field('hz', wave=wave, ind=xind)
+        vhz, tvhz = alz.load_field('hz', wave=wave, ind=xind, is_vac=True)
+        sey, twey = alz.load_field('ey', wave=wave, ind=xind)
+        vey, tvey = alz.load_field('ey', wave=wave, ind=xind, is_vac=True)
+        shy, twhy = alz.load_field('hy', wave=wave, ind=xind)
+        vhy, tvhy = alz.load_field('hy', wave=wave, ind=xind, is_vac=True)
+
+        #Normalize
+        sez /= vez
+        shz /= vhz
+        sey /= vey
+        shy /= vhy
 
         #Subtract Braunbek field
         if is_bbek:

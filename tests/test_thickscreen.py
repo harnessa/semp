@@ -20,13 +20,13 @@ class Test_Thick(object):
 
     ### HARDWIRED ###
     waves = [0.641, 0.725]
-    pad = 2.
+    pad = 4
     pml = 4.
-    seam_dark = 2.
+    seam_dark = 4.
     seam_lite = 0.
     resolution = 40
     atol = 0.02
-    wafer_thick = 2.25
+    wafer_thick = 2
     gap_width = 8
     do_plot = is_debug and semp.mpi_size == 1
 
@@ -40,12 +40,12 @@ class Test_Thick(object):
         self.run_sim()
 
         #Loop through observation distances
-        for obs_x in [0, 3]:
+        for obs_x in [0., -0.5]:
 
             #Get analyzer
             alz_params = {
                 'base_dir':         f'{semp.tmp_dir}/tests',
-                'session':          'thick_screen',
+                'session':          'thick_screen_noabs_1e-5',
                 'obs_distance':     obs_x,
             }
             alz = semp.analysis.Analyzer(alz_params)
@@ -54,10 +54,10 @@ class Test_Thick(object):
             alz.yy -= alz.prop.msim.geo.edge_y
 
             #Loop through waves
-            for wave in self.waves:
+            for wave in self.waves[:]:
 
                 #Loop through and check with and without braunbek
-                for is_bbek in [False, True]:
+                for is_bbek in [False, True][:1]:
 
                     #Check analyzer
                     self.check_analyzer(wave, alz, is_bbek)
@@ -68,6 +68,7 @@ class Test_Thick(object):
 
         #Get xindex
         xind = alz.get_xind()
+        breakpoint()
 
         #Load normalized data
         data_list = ['ez','hz','ey','hy']
@@ -178,6 +179,8 @@ class Test_Thick(object):
         aez, ahz, aey, ahy = adata
         dez, dhz, dey, dhy = ddata
 
+        xlim = self.gap_width/2 + 1
+
         #Plot
         fig, axes = plt.subplots(2, 2, figsize=(9,9), sharex=True)
         axes[0,0].plot(yy, np.abs(aez), '-',  label='Sommer Ez')
@@ -192,7 +195,7 @@ class Test_Thick(object):
 
         axes[0,0].set_ylabel('Amplitude')
         axes[1,0].set_ylabel('Phase')
-        axes[0,0].set_xlim(-3, 3)
+        axes[0,0].set_xlim(-xlim, xlim)
         for i in range(2):
             axes[0,i].axhline(0.5, color='k', linestyle=':')
             axes[0,i].legend()
@@ -212,7 +215,7 @@ class Test_Thick(object):
 
         axes2[0,0].set_ylabel('Amplitude')
         axes2[1,0].set_ylabel('Phase')
-        axes2[0,0].set_xlim(-3, 3)
+        axes2[0,0].set_xlim(-xlim, xlim)
         for i in range(2):
             axes2[0,i].axhline(0.5, color='k', linestyle=':')
             axes2[0,i].legend()
