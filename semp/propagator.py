@@ -138,7 +138,7 @@ class Propagator(object):
 
         #Decay check
         dcy_pt = self.msim.geo.decay_checkpoint
-        dcy_cn = {'s':mp.Ez, 'p':mp.Hz}[pol]
+        dcy_cn = {'s':mp.Ez, 'p':mp.Ey}[pol]
 
         #Run sim
         if is_vac:
@@ -196,10 +196,6 @@ class Propagator(object):
         #Get metadata
         if get_meta:
 
-            #Get dielectric
-            eps = sim.get_array(vol=vol, component=mp.Dielectric)
-            # eps = np.abs(sim.get_epsilon(self.msim.fcen0, vol=vol))
-
             #Get coordinates
             x,y,z,w = sim.get_array_metadata(dft_cell=dft_obj)
 
@@ -208,10 +204,6 @@ class Propagator(object):
 
                 #Prefix
                 pre = f"{self.logger.data_dir}/{['', 'vac-'][int(is_vac)]}"
-
-                #Save dielectric
-                with h5py.File(f'{pre}eps.h5', 'w') as f:
-                    f.create_dataset('dielectric', data=eps)
 
                 #Save coordinates
                 with h5py.File(f'{pre}coords_waves.h5', 'w') as f:
@@ -224,7 +216,7 @@ class Propagator(object):
             semp.mpi_barrier()
 
             #Cleanup
-            del eps, x, y, z
+            del  x, y, z
 
         #Reset meep
         sim.reset_meep()

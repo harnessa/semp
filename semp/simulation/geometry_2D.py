@@ -139,6 +139,60 @@ class Geometry_2D(object):
 
         return geometry
 
+    def __build_edge(self, y0=None, y1=None, zdepth=mp.inf):
+        #Container
+        geometry = []
+
+        #Materials
+        waf_mat = self.parent.wafer_mat_obj
+        skn_mat = self.parent.skin_mat_obj
+        oxi_mat = self.parent.oxide_mat_obj
+
+        #Set start point and width
+        y0 = self.ly/2.
+        y1 = self.edge_y
+
+        #Wafer
+        waf_sze = mp.Vector3(self.wafer_thick, y0-y1, zdepth)
+        waf_cen = mp.Vector3(0, -y0 + (y0-y1)/2, 0)
+        wafer = mp.Block(material=waf_mat, size=waf_sze, center=waf_cen)
+        geometry += [wafer]
+
+        #Skin
+        sksy = y0 - y1
+        skcx = -(self.wafer_thick + self.skin_thick)/2.
+        skcy = -y0 + sksy/2.
+        skcz = 0
+        if zdepth < 10000:
+            skcz = zdepth/2
+        skn_sze = mp.Vector3(self.skin_thick, sksy, zdepth)
+        skn_cen = mp.Vector3(skcx, skcy, skcz)
+        skin = mp.Block(material=skn_mat, size=skn_sze, center=skn_cen)
+        geometry += [skin]
+
+        #Oxidation layer
+        if self.oxide_thick > 0:
+            #Top layer
+            oksy = y0 - y1
+            okcx = -(self.wafer_thick/2 + self.skin_thick + self.oxide_thick/2)
+            okcy = -y0 + oksy/2.
+            okcz = 0
+            if zdepth < 10000:
+                okcz = zdepth/2
+            oxi_sze = mp.Vector3(self.oxide_thick, oksy, zdepth)
+            oxi_cen = mp.Vector3(okcx, okcy, okcz)
+            geometry += [mp.Block(material=oxi_mat, size=oxi_sze, center=oxi_cen)]
+            # #Side layer
+            # oxsy = self.oxide_thick
+            # oxi_sze = mp.Vector3(self.skin_thick, oxsy, zdepth)
+            # okcy = -y1 - oxsy/2.
+            # oxi_cen = mp.Vector3(skcx, okcy, okcz)
+            # geometry += [mp.Block(material=oxi_mat, size=oxi_sze, center=oxi_cen)]
+
+        import matplotlib.pyplot as plt;plt.ion()
+        breakpoint()
+        return geometry
+
     def build_edge(self, y0=None, y1=None, zdepth=mp.inf):
         #Container
         geometry = []
@@ -146,6 +200,7 @@ class Geometry_2D(object):
         #Materials
         waf_mat = self.parent.wafer_mat_obj
         skn_mat = self.parent.skin_mat_obj
+        oxi_mat = self.parent.oxide_mat_obj
 
         #Set start point and width
         if y0 is None:
@@ -176,16 +231,24 @@ class Geometry_2D(object):
 
         #Oxidation layer
         if self.oxide_thick > 0:
+            #Top layer
             oksy = y0 - y1
             okcx = -(self.wafer_thick/2 + self.skin_thick + self.oxide_thick/2)
             okcy = -y0 + oksy/2.
             okcz = 0
-            if not np.isclose(zdepth, mp.inf):
+            if zdepth < 10000:
                 okcz = zdepth/2
             oxi_sze = mp.Vector3(self.oxide_thick, oksy, zdepth)
             oxi_cen = mp.Vector3(okcx, okcy, okcz)
-            oxide = mp.Block(material=oxi_mat, size=oxi_sze, center=oxi_cen)
-            geometry += [oxide]
+            geometry += [mp.Block(material=oxi_mat, size=oxi_sze, center=oxi_cen)]
+            # #Side layer
+            # oxsy = self.oxide_thick
+            # oxi_sze = mp.Vector3(self.skin_thick, oxsy, zdepth)
+            # okcy = -y1 - oxsy/2.
+            # oxi_cen = mp.Vector3(skcx, okcy, okcz)
+            # geometry += [mp.Block(material=oxi_mat, size=oxi_sze, center=oxi_cen)]
+
+
 
         #Sidewalls
         if self.wall_thick > 0:

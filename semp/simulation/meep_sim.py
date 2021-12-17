@@ -204,7 +204,7 @@ class Meep_Sim(object):
         sim_src, amp_func = self.get_source_function()
 
         #Get source component
-        src_comp = getattr(mp, {'s': 'Ez', 'p': 'Hz'}[pol])
+        src_comp = getattr(mp, {'s': 'Ez', 'p': 'Ey'}[pol])
 
         #Build source
         sources = [mp.Source(sim_src, component=src_comp, center=src_pt, \

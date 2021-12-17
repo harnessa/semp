@@ -40,9 +40,9 @@ if [False, True][1]:
 else:
     sez = None
 
-bez = alz.get_data('ez', wave=wave)
-plt.imshow(abs(bez))
-breakpoint()
+# bez = alz.get_data('ez', wave=wave)
+# plt.imshow(abs(bez))
+# breakpoint()
 
 ########################################
 ########################################

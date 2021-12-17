@@ -50,8 +50,6 @@ MEEP_params = {
     'wafer_thick':      wafer_thick,
     'skin_thick':       skin_thick,
 
-    'is_sommerfeld':    True,
-
     # 'scallop_height':   scallop_height,
     # 'scallop_depth':    scallop_depth,
     # 'taper_angle':      taper_angle,

@@ -85,6 +85,9 @@ class Plotter(object):
         out = axes.imshow(data, extent=extent, interpolation='none',
             vmin=0, vmax=data[data < 1e3].max())
 
+        # out = axes.pcolormesh(self.alz.xx,self.alz.yy,np.transpose(data),shading='gouraud',vmin=0, vmax=data[data < 1e3].max())
+        # axes.set_aspect('equal')
+
         #Add substrate
         if with_lines:
             self.draw_substrate(axes)

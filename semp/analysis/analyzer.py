@@ -87,16 +87,24 @@ class Analyzer(object):
 ############################################
 
     def get_data(self, comp, wave=None, ind=None, is_bbek=False):
+
+        #X field has different vacuum data
+        if comp[-1] == 'x':
+            vac_comp = comp[0] + 'z'
+        else:
+            vac_comp = comp
+
         #Load data
         fld, fld_time = self.load_field(comp, wave=wave, ind=ind)
-        vac, vac_time = self.load_field(comp, wave=wave, ind=ind, is_vac=True)
+
+        #Load vacuum data
+        vac, vac_time = self.load_field(vac_comp, wave=wave, ind=ind, is_vac=True)
 
         #Normalize by vacuum field
-        if not np.allclose(np.abs(vac),0):
-            fld /= vac
+        fld /= vac
 
         #Subtract 1 if braunbek
-        if is_bbek:
+        if is_bbek and comp[-1] != 'x':
             if self.prop.msim.geo.is_edge:
                 fld -= np.heaviside(self.yy, 0)
             else:
@@ -168,6 +176,13 @@ class Analyzer(object):
         else:
             pol = 'p'
 
+        #Wave index
+        wind = self.get_wind(wave)
+
+        return pol, wind, comp, vac_ext
+
+    def get_wind(self, wave=None):
+
         #wavelength index
         if wave is None:
             wind = 0
@@ -178,7 +193,7 @@ class Analyzer(object):
                 print('\nWavelength is not close!\n')
                 breakpoint()
 
-        return pol, wind, comp, vac_ext
+        return wind
 
     ############################################
 
@@ -199,12 +214,12 @@ class Analyzer(object):
             data = f[f'{comp}_{wind}.r'][()] + 1j*f[f'{comp}_{wind}.i'][()]
 
         #Load simulation time
-        with h5py.File(f'{self.data_dir}/{vac_ext}simtime_{pol}.h5', 'r') as f:
-            sim_time = f['sim_time'][()]
-            sim_timesteps = f['sim_timesteps'][()]
-
-            # print(comp, is_vac, sim_time, sim_timesteps, f['resolution'][()], f['courant'][()])
-        # breakpoint()
+        try:
+            with h5py.File(f'{self.data_dir}/{vac_ext}simtime_{pol}.h5', 'r') as f:
+                sim_time = f['sim_time'][()]
+                sim_timesteps = f['sim_timesteps'][()]
+        except:
+            sim_timesteps = 0
 
         #Extract index slice
         data = data[ind]

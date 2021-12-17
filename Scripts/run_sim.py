@@ -20,27 +20,29 @@ MEEP_params = {
     'waves':            0.641,
 
     ### Mask Properties ###
-    'sim_geometry':     'gap',
+    'sim_geometry':     'edge',
     'seam_dark':        5,
-    'seam_lite':        10,
+    'seam_lite':        5,
     'is_sommerfeld':    True,
 
     'wafer_material':   'metal',
     'skin_material':    'metal',
     'wafer_thick':      2,
-    'skin_thick':       0.25,
+    # 'skin_thick':       0.25,
 
     ### Numerics ###
-    'resolution':       30,
-    'pml_all':          4,
-    'pad_all':          4,
-
+    'resolution':       26,
+    'pml_all':          2,
+    'pad_all':          2,
+    'use_absorber': False,
 }
 
 #Main parameters
 PROP_params = {
     # 'session': 'sommer'
-    'session': 'test3'
+    'session':  'dum',
+    # 'session': 'gauss_beam/edge_gg_off',
+    # 'is_movie':True,
 }
 
 #Run simulation
