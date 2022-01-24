@@ -95,10 +95,10 @@ class Analyzer(object):
             vac_comp = comp
 
         #Load data
-        fld, fld_time = self.load_field(comp, wave=wave, ind=ind)
+        fld = self.load_field(comp, wave=wave, ind=ind)
 
         #Load vacuum data
-        vac, vac_time = self.load_field(vac_comp, wave=wave, ind=ind, is_vac=True)
+        vac = self.load_field(vac_comp, wave=wave, ind=ind, is_vac=True)
 
         #Normalize by vacuum field
         fld /= vac
@@ -213,14 +213,6 @@ class Analyzer(object):
         with h5py.File(fname, 'r') as f:
             data = f[f'{comp}_{wind}.r'][()] + 1j*f[f'{comp}_{wind}.i'][()]
 
-        #Load simulation time
-        try:
-            with h5py.File(f'{self.data_dir}/{vac_ext}simtime_{pol}.h5', 'r') as f:
-                sim_time = f['sim_time'][()]
-                sim_timesteps = f['sim_timesteps'][()]
-        except:
-            sim_timesteps = 0
-
         #Extract index slice
         data = data[ind]
 
@@ -228,7 +220,7 @@ class Analyzer(object):
         if is_vac and len(data.shape) != 0:
             data = data[:,None]
 
-        return data, sim_timesteps
+        return data
 
     ############################################
 

@@ -91,15 +91,15 @@ class Propagator(object):
         for pol in self.msim.polars:
 
             #Run sim with wafer
-            waf_run_time = self.run_single_to_end(pol, False, None, get_meta)
+            self.run_single_to_end(pol, False, get_meta)
 
             #Run sim in vacuum
-            vac_run_time = self.run_single_to_end(pol, True, waf_run_time, get_meta)
+            self.run_single_to_end(pol, True, get_meta)
 
             #Turn off flag
             get_meta = False
 
-    def run_single_to_end(self, pol, is_vac, run_time, get_meta):
+    def run_single_to_end(self, pol, is_vac, get_meta):
 
         #Build to simulation
         sim = self.msim.build_sim(pol=pol, is_vac=is_vac)
@@ -140,15 +140,9 @@ class Propagator(object):
         dcy_pt = self.msim.geo.decay_checkpoint
         dcy_cn = {'s':mp.Ez, 'p':mp.Ey}[pol]
 
-        #Run sim
-        if is_vac:
-            #Run vacuum sim to same time as original simulation
-            sim.run(until=run_time)
-
-        else:
-            #Run wafer sim until decays
-            sim.run(until_after_sources=mp.stop_when_fields_decayed( \
-                dt=self.msim.decay_dt, pt=dcy_pt, c=dcy_cn, decay_by=self.msim.decay_by))
+        #Run sim until decays
+        sim.run(until_after_sources=mp.stop_when_fields_decayed( \
+            dt=self.msim.decay_dt, pt=dcy_pt, c=dcy_cn, decay_by=self.msim.decay_by))
 
         #Synchronize magnetic fields
         sim.fields.synchronize_magnetic_fields()
@@ -156,16 +150,9 @@ class Propagator(object):
         #Output DFT fields
         sim.output_dft(dft_obj, dft_name)
 
-        #Save simulation time
+        #Get simulation time (not used)
         sim_time = sim.meep_time()
         sim_timesteps = sim_time / (self.msim.courant / self.msim.resolution)
-        if semp.zero_rank:
-            tname =  f'{self.logger.data_dir}/{["", "vac-"][int(is_vac)]}simtime_{pol}.h5'
-            with h5py.File(tname, 'w') as f:
-                f.create_dataset('sim_time', data=sim_time)
-                f.create_dataset('sim_timesteps', data=sim_timesteps)
-                f.create_dataset('courant', data=self.msim.courant)
-                f.create_dataset('resolution', data=self.msim.resolution)
 
         #Get far fields
         if self.with_farfield:
@@ -220,9 +207,6 @@ class Propagator(object):
 
         #Reset meep
         sim.reset_meep()
-
-        #Return simulation time
-        return sim_time
 
 ############################################
 ############################################
