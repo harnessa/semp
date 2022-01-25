@@ -20,10 +20,11 @@ for fn in fnames:
     yys.append(ny)
     angs.append(ang)
 
-# for i in range(len(fnames)):
-#     plt.figure()
-#     plt.imshow(abs(data[i]))
+for i in range(len(fnames)):
+    plt.figure()
+    plt.imshow(abs(data[i]))
 
+breakpoint()
 # #Interpolate rotation
 # from scipy.interpolate import RectBivariateSpline
 # x2, y2 = np.arange(len(x)), np.arange(len(y))
