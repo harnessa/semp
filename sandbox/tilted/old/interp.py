@@ -32,17 +32,35 @@ y1 = (x0 - xc)[:,None]*np.sin(ang1) + (y0 - yc)*np.cos(ang1) + yc
 fld0 = abs(fld0)
 fld1 = abs(fld1)
 
-#Calcluate fld1 by rotating fld0
-rot_mat = cv2.getRotationMatrix2D((ixc, iyc), np.degrees(ang1), 1)
-fld1 = cv2.warpAffine(fld0, rot_mat, fld0.shape[1::-1], flags=cv2.INTER_LINEAR)
+# #Calcluate fld1 by rotating fld0
+# rot_mat = cv2.getRotationMatrix2D((ixc, iyc), np.degrees(ang1), 1)
+# fld1 = cv2.warpAffine(fld0, rot_mat, fld0.shape[1::-1], flags=cv2.INTER_LINEAR)
+
+# plt.figure()
+# plt.imshow(abs(fld0))
+#
+# plt.figure()
+# plt.imshow(abs(fld1))
+
+rot_mat = cv2.getRotationMatrix2D((ixc, iyc), -np.degrees(ang1), 1)
+fa = cv2.warpAffine(fld1, rot_mat, fld1.shape[1::-1], flags=cv2.INTER_LINEAR)
+
+i1 = interp.RegularGridInterpolator((x0, y0), fld1, bounds_error=False, fill_value=0)
+
+#Get image
+fb = i1((x1, y1))
+
 
 plt.figure()
-plt.imshow(abs(fld0))
+plt.imshow(abs(fa))
 
 plt.figure()
-plt.imshow(abs(fld1))
+plt.imshow(abs(fb))
 
+plt.figure()
+plt.imshow(abs(fa-fb))
 
+breakpoint()
 thick = 1
 
 ############################################

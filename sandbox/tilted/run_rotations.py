@@ -13,7 +13,7 @@ resolution = 30
 dpml = 4
 dpad = 4
 seam_dark = 15
-seam_lite = 35
+seam_lite = 45
 
 #Wafer
 wafer_thick = 2.25
@@ -23,7 +23,11 @@ skin_material = 'Al'
 
 #Angles to run
 ang_max = 5
-nangs = 10
+nangs = 11
+
+#Directory
+# base_dir = '/home/aharness/Research/Optics_Modeling/Semp_Results/tilted_runs'
+base_dir = '/scratch/network/aharness/Semp_Results/tilted_runs/plain'
 
 ############################################
 ####	Other params ####
@@ -33,7 +37,12 @@ nangs = 10
 decay_dt = 50         # Time after decay to
 decay_by = 1e-3       # Decay amount
 waves = np.array([0.641, 0.660, 0.699, 0.725])
-base_dir = '/home/aharness/Research/Optics_Modeling/Semp_Results/tilted_runs'
+
+#Force to be odd (so that we get 0 angle)
+nangs += (nangs + 1) % 2
+
+#Make sure seam_lite is big enough for largest angle
+seam_lite = max(seam_lite, seam_dark + wafer_thick/np.sin(np.radians(ang_max)))
 
 #Derived
 freqs = 1./waves
@@ -54,6 +63,10 @@ cell_size = mp.Vector3(dpml*2 + lx_np, dpml*2 + ly_np)
 ############################################
 
 def run_sim(ang, pol, is_vac, get_meta):
+
+    #Print
+    if mp.am_master():
+        print(f'\nRunning: {ang}, {pol}, {is_vac}\n')
 
     #Run specific
     rot_angle = np.radians(ang)
@@ -86,6 +99,8 @@ def run_sim(ang, pol, is_vac, get_meta):
             center=mp.Vector3(y=waf_cy), e1=e1, e2=e2)
         skin = mp.Block(material=skn_mat ,size=mp.Vector3(skin_thick, waf_sy, mp.inf),
             center=mp.Vector3(-wafer_thick/2 - skin_thick/2, waf_cy), e1=e1, e2=e2)
+        #Get edge of wafer
+        edge_y = wafer.center.y + wafer.size.y/2
         geometry += [wafer, skin]
 
     #Build simulation
@@ -103,8 +118,7 @@ def run_sim(ang, pol, is_vac, get_meta):
     dft_name = f'{save_dir}/{["", "vac-"][int(is_vac)]}fields_{pol}'
 
     #Get fields to output
-    fld_names = {'s':[mp.Ez, mp.Hy], 'p':[mp.Hz, mp.Ey]}[pol]
-    far_names = {'s':['Ez', 'Hy'], 'p':['Hz', 'Ey']}[pol]
+    fld_names = {'s':[mp.Ez], 'p':[mp.Ey]}[pol]
 
     #Add DFT fields
     vol = mp.Volume(size=mp.Vector3(lx_np, ly_np))
@@ -143,6 +157,12 @@ def run_sim(ang, pol, is_vac, get_meta):
                 f.create_dataset('waves', data=waves)
                 f.create_dataset('rot_angle', data=rot_angle)
                 f.create_dataset('wafer_center', data=[wafer.center.x, wafer.center.y])
+                f.create_dataset('wafer_thick', data=wafer_thick)
+                f.create_dataset('skin_thick', data=skin_thick)
+                f.create_dataset('resolution', data=resolution)
+                f.create_dataset('dpml_dpad', data=[dpml, dpad])
+                f.create_dataset('seams__dark_lite', data=[seam_dark, seam_lite])
+                f.create_dataset('edge_y', data=edge_y)
 
         #Cleanup
         del x, y, z, w
