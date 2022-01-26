@@ -89,7 +89,7 @@ angs = np.linspace(-ang_max, ang_max, nangs)
 #Get slices
 sdata, pdata, ydata = [], [], []
 for wind in range(len(waves)):
-    stmp, ptmp, ytmp = [], [], []
+    stmp, ptmp = [], []
     for ang in angs:
 
         #Get data
@@ -99,12 +99,11 @@ for wind in range(len(waves)):
         #Append
         stmp.append(sfld)
         ptmp.append(pfld)
-        ytmp.append(sy)
 
     #Append
     sdata.append(np.array(stmp))
     pdata.append(np.array(ptmp))
-    ydata.append(np.array(ytmp))
+    ydata.append(sy)
 
 #Save data
 if True:

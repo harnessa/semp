@@ -21,13 +21,21 @@ skin_thick = 0.3
 wafer_material = 'cSi'
 skin_material = 'Al'
 
+#Scallops
+scallop_list = [
+    [(0.205, 0.324), (0.762, 0.810)],
+    [(0.148, 1.157), (0.762, 0.824)],
+    [(0.019, 1.900), (0.762, 0.767)]
+]
+
 #Angles to run
 ang_max = 5
 nangs = 11
 
 #Directory
+base_dir = '/home/aharness/Research/Optics_Modeling/Semp_Results/test'
 # base_dir = '/home/aharness/Research/Optics_Modeling/Semp_Results/tilted_runs'
-base_dir = '/scratch/network/aharness/Semp_Results/tilted_runs/plain'
+# base_dir = '/scratch/network/aharness/Semp_Results/tilted_runs/scallops'
 
 ############################################
 ####	Other params ####
@@ -91,17 +99,45 @@ def run_sim(ang, pol, is_vac, get_meta):
     #Geometry
     geometry = []
     if not is_vac:
+
+        #Rotate function
+        rot_func = lambda vec: vec.rotate(mp.Vector3(z=1), rot_angle)
+
+        #Wafer
         waf_sy = dpad+dpml+seam_dark
-        waf_cy = -0.5*cell_size.y + 0.4*waf_sy
-        e1 = mp.Vector3(x=1).rotate(mp.Vector3(z=1), rot_angle)
-        e2 = mp.Vector3(y=1).rotate(mp.Vector3(z=1), rot_angle)
+        waf_cc = mp.Vector3(y=-0.5*cell_size.y + 0.4*waf_sy)
+        e1 = rot_func(mp.Vector3(x=1))
+        e2 = rot_func(mp.Vector3(y=1))
         wafer = mp.Block(material=waf_mat, size=mp.Vector3(wafer_thick, waf_sy, mp.inf),
-            center=mp.Vector3(y=waf_cy), e1=e1, e2=e2)
+            center=mp.Vector3(y=waf_cc.y), e1=e1, e2=e2)
+
+        #Skin (Rotate about center of wafer)
+        skn_cc = mp.Vector3(-wafer_thick/2 - skin_thick/2, waf_cc.y)
+        skn_cc = rot_func(skn_cc - waf_cc) + waf_cc
         skin = mp.Block(material=skn_mat ,size=mp.Vector3(skin_thick, waf_sy, mp.inf),
-            center=mp.Vector3(-wafer_thick/2 - skin_thick/2, waf_cy), e1=e1, e2=e2)
+            center=mp.Vector3(skn_cc.x, skn_cc.y), e1=e1, e2=e2)
+
         #Get edge of wafer
         edge_y = wafer.center.y + wafer.size.y/2
+        #Add to list
         geometry += [wafer, skin]
+
+        #Scallops
+        if len(scallop_list) > 0:
+            #Get top point of wafer
+            waf_p0 = mp.Vector3(-wafer_thick/2, edge_y).rotate(mp.Vector3(z=1), rot_angle)
+
+            #Loop through scallop list
+            for scallop in scallop_list:
+                #Get current size and center
+                cur_cen, cur_sze = scallop
+                scl_sze = mp.Vector3(cur_sze[1], cur_sze[0], mp.inf)
+                #Rotate center about center of wafer
+                scl_cc = mp.Vector3(-wafer_thick/2 + cur_cen[1], edge_y + cur_cen[0])
+                scl_cc = rot_func(scl_cc - waf_cc) + waf_cc
+                #Add air ellipsoid
+                geometry += [mp.Ellipsoid(material=mp.air, size=scl_sze, \
+                    center=scl_cc, e1=e1, e2=e2)]
 
     #Build simulation
     sim = mp.Simulation(force_complex_fields=True,
