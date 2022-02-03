@@ -16,22 +16,25 @@ import semp
 #Meep parameters
 MEEP_params = {
     ### Lab Properties  ###
-    'polars':           ['s', 'p'],
+    'polars':           ['s', 'p'][0],
     'waves':            0.641,
 
     ### Mask Properties ###
-    'sim_geometry':     'edge',
-    'seam_dark':        5,
-    'seam_lite':        5,
-    'is_sommerfeld':    True,
+    'sim_geometry':     'gap',
+    'seam_dark':        4,
+    'seam_lite':        4,
+    'is_sommerfeld':    False,
 
-    'wafer_material':   'metal',
-    'skin_material':    'metal',
+    # 'wafer_material':   'cSi',
+    'wafer_epsilon':    (14.960 + 1j*0.14014),
+    # 'wafer_epsilon':    (14.960 + 1j*0),
+    # 'skin_epsilon':    (-44.4 + 1j*16),
+    'skin_material':    'Al',
     'wafer_thick':      2,
-    # 'skin_thick':       0.25,
+    'skin_thick':       0.25,
 
     ### Numerics ###
-    'resolution':       26,
+    'resolution':       30,
     'pml_all':          2,
     'pad_all':          2,
     'use_absorber': False,
@@ -40,7 +43,7 @@ MEEP_params = {
 #Main parameters
 PROP_params = {
     # 'session': 'sommer'
-    'session':  'dum',
+    'session':  'skin_epsi_2',
     # 'session': 'gauss_beam/edge_gg_off',
     # 'is_movie':True,
 }

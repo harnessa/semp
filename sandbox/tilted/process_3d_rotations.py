@@ -5,17 +5,17 @@ import matplotlib.pyplot as plt;plt.ion()
 
 # fig, axes = plt.subplots(2, sharex=True, figsize=(8,11))
 
-def get_slice(ang, pol, wind, base_dir, trim_dark, trim_lite):
+def get_slice(inn_ang, out_ang, pol, wind, base_dir, trim_dark, trim_lite):
 
-    sgn = ["n", "p"][int((np.sign(ang)+1)/2)]
-    load_dir = f'{base_dir}/{sgn}{abs(ang)*100:.0f}'
+    sgn = ["n", "p"][int((np.sign(inn_ang)+1)/2)]
+    load_dir = f'{base_dir}/{sgn}{abs(inn_ang)*100:.0f}_{abs(out_ang)*100:.0f}'
 
     #Load meta data
     with h5py.File(f'{load_dir}/meta.h5', 'r') as f:
         xx = f['xx'][()]        #Source coordinates (light source)
         yy = f['yy'][()]
         waves = f['waves'][()]
-        rot_angle = f['rot_angle'][()]
+        inn_rot_angle = f['inn_rot_angle'][()]
         wafer_center = f['wafer_center'][()]
         wafer_thick = f['wafer_thick'][()]
         resolution = f['resolution'][()]
@@ -39,7 +39,7 @@ def get_slice(ang, pol, wind, base_dir, trim_dark, trim_lite):
     rot_cen = (wafer_center * resolution + np.array(waf_fld.shape)/2)[::-1]
 
     #Derotate image
-    rot_mat = cv2.getRotationMatrix2D(tuple(rot_cen), -np.degrees(rot_angle), 1)
+    rot_mat = cv2.getRotationMatrix2D(tuple(rot_cen), -np.degrees(inn_rot_angle), 1)
     do_rot = lambda fld:  \
         cv2.warpAffine(fld, rot_mat, waf_fld.shape[1::-1], flags=cv2.INTER_LINEAR)
 
@@ -78,12 +78,13 @@ def get_slice(ang, pol, wind, base_dir, trim_dark, trim_lite):
 ############################################
 
 #Angles to run
-ang_max = 5
+inn_ang_max = 10
+out_ang_max = 10
 nangs = 11
-# session = 'scallops_new'
-session = 'kz2'
+session = 'scallops_3D_b'
 
-base_dir = f'/home/aharness/Research/Optics_Modeling/Semp_Results/tilted_runs/{session}'
+#base_dir = f'/home/aharness/Research/Optics_Modeling/Semp_Results/tilted_runs/{session}'
+base_dir = f'/scratch/network/aharness/Semp_Results/tilted_runs/{session}'
 waves = [641, 660, 699, 725]
 
 #Size to trim
@@ -92,44 +93,40 @@ trim_lite = 30
 
 #Angles
 nangs += (nangs + 1) % 2
-angs = np.linspace(-ang_max, ang_max, nangs)
-
-angs = [-25, 0] #FIXME
+inn_angs = np.linspace(-inn_ang_max, inn_ang_max, nangs)
+out_angs = np.linspace(0, out_ang_max, nangs)
 
 #Get slices
 sdata, pdata, ydata = [], [], []
 for wind in range(len(waves)):
-    stmp, ptmp = [], []
-    for ang in angs:
+    sinn, pinn = [], []
+    for inn_ang in inn_angs:
+        sout, pout = [], []
+        for out_ang in out_angs:
 
-        #Get data
-        sy, sfld = get_slice(ang, 's', wind, base_dir, trim_dark, trim_lite)
-        # py, pfld = get_slice(ang, 'p', wind, base_dir, trim_dark, trim_lite)
-        pfld = 0
+            #Get data
+            sy, sfld = get_slice(inn_ang, out_ang, 's', wind, base_dir, trim_dark, trim_lite)
+            py, pfld = get_slice(inn_ang, out_ang, 'p', wind, base_dir, trim_dark, trim_lite)
+
+            #Append
+            sout.append(sfld)
+            pout.append(pfld)
 
         #Append
-        stmp.append(sfld)
-        ptmp.append(pfld)
+        sinn.append(sout)
+        pinn.append(pout)
 
     #Append
-    sdata.append(np.array(stmp))
-    pdata.append(np.array(ptmp))
+    sdata.append(np.array(sinn))
+    pdata.append(np.array(pinn))
     ydata.append(sy)
 
-import matplotlib.pyplot as plt;plt.ion()
-for i in range(4)[:1]:
-    fig, axes = plt.subplots(1, 2)
-    axes[0].plot(abs(sdata[i][0]))
-    axes[0].plot(abs(sdata[i][1]), '--')
-    axes[1].plot(np.angle(sdata[i][0]))
-    axes[1].plot(np.angle(sdata[i][1]), '--')
-breakpoint()
-
 #Save data
-if False:
+if True:
     with h5py.File(f'./Results/results__{session}.h5', 'w') as f:
         f.create_dataset('waves', data=np.array(waves)*1e-9)
-        f.create_dataset('angles', data=np.array(angs))
+        f.create_dataset('inn_angles', data=np.array(inn_angs))
+        f.create_dataset('out_angles', data=np.array(out_angs))
         for i in range(len(waves)):
             #Write out edges
             f.create_dataset(f'{waves[i]:.0f}_x', data=ydata[i]*1e-6)

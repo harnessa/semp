@@ -117,6 +117,44 @@ class Meep_Sim(object):
                 setattr(self, f'{ob}_mat_obj', getattr(mat_lib, \
                     getattr(self, f'{ob}_material')))
 
+        # um_scale = 1.0
+        # eV_um_scale = um_scale/1.23984193
+        # metal_range = mp.FreqRange(min=um_scale/12.398, max=um_scale/.24797)
+        #
+        # Al_plasma_frq = 14.98*eV_um_scale
+        # Al_f0 = 0.523 * 0.02
+        # Al_frq0 = 1e-10 * 0.1
+        # Al_gam0 = 0.047*eV_um_scale
+        # Al_sig0 = Al_f0*Al_plasma_frq**2/Al_frq0**2
+        # Al_f1 = 0.227* 0.005
+        # Al_frq1 = 0.162*eV_um_scale      # 7.654 um
+        # Al_gam1 = 0.333*eV_um_scale
+        # Al_sig1 = Al_f1*Al_plasma_frq**2/Al_frq1**2
+        # Al_f2 = 0.050 * 0.005
+        # Al_frq2 = 1.544*eV_um_scale      # 0.803 um
+        # Al_gam2 = 0.312*eV_um_scale
+        # Al_sig2 = Al_f2*Al_plasma_frq**2/Al_frq2**2
+        # Al_f3 = 0.166 * 0.05
+        # Al_frq3 = 1.808*eV_um_scale      # 0.686 um
+        # Al_gam3 = 1.351*eV_um_scale /2
+        # Al_sig3 = Al_f3*Al_plasma_frq**2/Al_frq3**2
+        # Al_f4 = 0.030 * 0.001
+        # Al_frq4 = 3.473*eV_um_scale      # 0.357 um
+        # Al_gam4 = 3.382*eV_um_scale
+        # Al_sig4 = Al_f4*Al_plasma_frq**2/Al_frq4**2
+        #
+        # Al_susc = [mp.DrudeSusceptibility(frequency=Al_frq0, gamma=Al_gam0, sigma=Al_sig0),
+        #            mp.LorentzianSusceptibility(frequency=Al_frq1, gamma=Al_gam1, sigma=Al_sig1),
+        #            mp.LorentzianSusceptibility(frequency=Al_frq2, gamma=Al_gam2, sigma=Al_sig2),
+        #            mp.LorentzianSusceptibility(frequency=Al_frq3, gamma=Al_gam3, sigma=Al_sig3),
+        #            mp.LorentzianSusceptibility(frequency=Al_frq4, gamma=Al_gam4, sigma=Al_sig4)]
+        #
+        # Al = mp.Medium(epsilon=1.0, E_susceptibilities=Al_susc, valid_freq_range=metal_range)
+        # self.skin_mat_obj = Al
+        #
+        # print(Al.epsilon(1/.641)[0,0])
+        # # breakpoint()
+
 ############################################
 ############################################
 

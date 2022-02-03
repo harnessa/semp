@@ -9,7 +9,7 @@ import os
 ############################################
 
 #Numerics
-resolution = 30
+resolution = 40
 dpml = 4
 dpad = 4
 seam_dark = 15
@@ -29,13 +29,14 @@ scallop_list = [
 ]
 
 #Angles to run
-ang_max = 5
+inn_ang_max = 10
+out_ang_max = 10
 nangs = 11
 
 #Directory
-base_dir = '/home/aharness/Research/Optics_Modeling/Semp_Results/bottom_test'
+# base_dir = '/home/aharness/Research/Optics_Modeling/Semp_Results/test'
 # base_dir = '/home/aharness/Research/Optics_Modeling/Semp_Results/tilted_runs'
-# base_dir = '/scratch/network/aharness/Semp_Results/tilted_runs/scallops'
+base_dir = '/scratch/network/aharness/Semp_Results/tilted_runs/scallops_3D_r40'
 
 ############################################
 ####	Other params ####
@@ -50,16 +51,17 @@ waves = np.array([0.641, 0.660, 0.699, 0.725])
 nangs += (nangs + 1) % 2
 
 #Make sure x big enough to get full seam
-xseam_pad = max(2*dpad, np.ceil((seam_lite + 0.5*seam_dark)*np.sin(np.radians(ang_max))))
+xseam_pad = max(2*dpad, np.ceil((seam_lite + 0.5*seam_dark)*np.sin(np.radians(inn_ang_max))))
 
 #Make sure seam_lite is big enough for largest angle
-seam_lite = max(seam_lite, seam_dark + wafer_thick/np.sin(np.radians(ang_max)))
+seam_lite = max(seam_lite, seam_dark + wafer_thick/np.sin(np.radians(inn_ang_max)))
 
 #Derived
 freqs = 1./waves
 fcen0 = freqs.mean()
 dfreq = max(2.*freqs.ptp(), 0.35)
-angs = np.linspace(-ang_max, ang_max, nangs)
+inn_angs = np.linspace(-inn_ang_max, inn_ang_max, nangs)
+out_angs = np.linspace(0, out_ang_max, nangs)
 
 mat_lib.metal = mp.metal
 waf_mat = getattr(mat_lib, wafer_material)
@@ -73,19 +75,20 @@ cell_size = mp.Vector3(dpml*2 + lx_np, dpml*2 + ly_np)
 ####	Simulation Function ####
 ############################################
 
-def run_sim(ang, pol, is_vac, get_meta):
+def run_sim(inn_ang, out_ang, pol, is_vac, get_meta):
 
     #Print
     if mp.am_master():
-        print(f'\nRunning: {ang}, {pol}, {is_vac}\n')
+        print(f'\nRunning: {inn_ang}, {out_ang}, {pol}, {is_vac}\n')
 
     #Run specific
-    rot_angle = np.radians(ang)
+    inn_rot_angle = np.radians(inn_ang)
+    out_rot_angle = np.radians(out_ang)
     src_comp = getattr(mp, {'s': 'Ez', 'p': 'Ey'}[pol])
 
     #Save dir
-    sgn = ["n", "p"][int((np.sign(ang)+1)/2)]
-    save_dir = f'{base_dir}/{sgn}{abs(ang)*100:.0f}'
+    sgn = ["n", "p"][int((np.sign(inn_rot_angle)+1)/2)]
+    save_dir = f'{base_dir}/{sgn}{abs(inn_ang)*100:.0f}_{abs(out_ang)*100:.0f}'
     if mp.am_master():
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
@@ -110,7 +113,7 @@ def run_sim(ang, pol, is_vac, get_meta):
     if not is_vac:
 
         #Rotate function
-        rot_func = lambda vec: vec.rotate(mp.Vector3(z=1), rot_angle)
+        rot_func = lambda vec: vec.rotate(mp.Vector3(z=1), inn_rot_angle)
 
         #Wafer
         waf_sy = dpad+dpml+seam_dark
@@ -131,16 +134,10 @@ def run_sim(ang, pol, is_vac, get_meta):
         #Add to list
         geometry += [wafer, skin]
 
-        skn_cc2 = mp.Vector3(wafer_thick/2 + skin_thick/2, waf_cc.y)
-        skn_cc2 = rot_func(skn_cc2 - waf_cc) + waf_cc
-        skin2 = mp.Block(material=skn_mat ,size=mp.Vector3(skin_thick, waf_sy, mp.inf),
-            center=mp.Vector3(skn_cc2.x, skn_cc2.y), e1=e1, e2=e2)
-        geometry += [skin2]
-
         #Scallops
         if len(scallop_list) > 0:
             #Get top point of wafer
-            waf_p0 = mp.Vector3(-wafer_thick/2, edge_y).rotate(mp.Vector3(z=1), rot_angle)
+            waf_p0 = mp.Vector3(-wafer_thick/2, edge_y).rotate(mp.Vector3(z=1), inn_rot_angle)
 
             #Loop through scallop list
             for scallop in scallop_list:
@@ -154,11 +151,14 @@ def run_sim(ang, pol, is_vac, get_meta):
                 geometry += [mp.Ellipsoid(material=mp.air, size=scl_sze, \
                     center=scl_cc, e1=e1, e2=e2)]
 
+    #Kpoint
+    kpoint = mp.Vector3(z=np.sin(out_rot_angle)).scale(fcen0)
+
     #Build simulation
     sim = mp.Simulation(force_complex_fields=True,
         resolution=resolution, ensure_periodicity=False,
         cell_size=cell_size, boundary_layers=pml_layers, sources=sources,
-        geometry=geometry, k_point=mp.Vector3())
+        geometry=geometry, k_point=kpoint)
 
     ############################################
     ############################################
@@ -206,7 +206,8 @@ def run_sim(ang, pol, is_vac, get_meta):
                 f.create_dataset('xx', data=x)
                 f.create_dataset('yy', data=y)
                 f.create_dataset('waves', data=waves)
-                f.create_dataset('rot_angle', data=rot_angle)
+                f.create_dataset('inn_rot_angle', data=inn_rot_angle)
+                f.create_dataset('out_rot_angle', data=out_rot_angle)
                 f.create_dataset('wafer_center', data=[wafer.center.x, wafer.center.y])
                 f.create_dataset('wafer_thick', data=wafer_thick)
                 f.create_dataset('skin_thick', data=skin_thick)
@@ -224,16 +225,17 @@ def run_sim(ang, pol, is_vac, get_meta):
 ############################################
 ####	Loop over angles and run sim ####
 ############################################
-angs = [0]
-for ang in angs:
-    #Get meta for each angle
-    get_meta = True
 
-    for pol in ['s','p']:
-        for is_vac in [False, True]:
+for inn_ang in inn_angs:
+    for out_ang in out_angs:
+        #Get meta for each angle
+        get_meta = True
 
-            #Run sim
-            run_sim(ang, pol, is_vac, get_meta)
+        for pol in ['s','p']:
+            for is_vac in [False, True]:
 
-            #Clear flag
-            get_meta = False
+                #Run sim
+                run_sim(inn_ang, out_ang, pol, is_vac, get_meta)
+
+                #Clear flag
+                get_meta = False

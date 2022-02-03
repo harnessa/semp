@@ -8,13 +8,13 @@ import matplotlib.pyplot as plt;plt.ion()
 ####	User Input ####
 ############################################
 
-is_vac = [False, True][0]
+is_vac = [False, True][1]
 
 resolution = 10
 
 rot_angle = np.radians(0)
 
-angs = [0, 10, -10][1:]
+angs = [0, 10, -10][:1]
 
 for ang in angs:
 
@@ -24,7 +24,7 @@ for ang in angs:
 
     dpml = 2
     dpad = 3
-    gap = 4
+    gap = 5
     thick = 1
 
     wave = 0.6
@@ -40,15 +40,31 @@ for ang in angs:
     cell_size = mp.Vector3(dpml*2 + lx_np, dpml*2 + ly_np)
     src_comp = getattr(mp, {'s': 'Ez', 'p': 'Ey'}[pol])
 
+    #Kpoint
+    theta = np.radians(5)
+    kpoint = mp.Vector3(z=np.sin(theta)).scale(fcen)
+
+    def pw_amp(k, x0):
+        def _pw_amp(x):
+            return np.exp(1j * 2*np.pi*k.dot(x + x0))
+        return _pw_amp
+
     #Source
     sim_src = mp.GaussianSource(fcen, fwidth=df, is_integrated=True)
     # sim_src = mp.ContinuousSource(fcen, fwidth=df, is_integrated=True)
+    src_pt = mp.Vector3(x=-0.5*lx_np)
     sources = [mp.Source(sim_src, component=src_comp,
-                center=mp.Vector3(x=-0.5*lx_np), \
-                size=mp.Vector3(y=cell_size.y))]
+                center=src_pt, \
+                size=mp.Vector3(y=cell_size.y),
+                amp_func=pw_amp(kpoint, src_pt))]
 
     #PML
-    pml_layers = [mp.PML(thickness=dpml)]
+    if pol == 's' or is_vac:
+        pml_layers = [mp.PML(thickness=dpml)]
+    else:
+        pml_layers = [mp.PML(thickness=dpml,  direction=mp.X), \
+            mp.PML(thickness=dpml, direction=mp.Y, side=-1),
+            mp.Absorber(thickness=dpml, direction=mp.Y, side=1)]
 
     #Geometry
     geometry = []
@@ -64,16 +80,15 @@ for ang in angs:
     sim = mp.Simulation(force_complex_fields=True,
         resolution=resolution, ensure_periodicity=False,
         cell_size=cell_size, boundary_layers=pml_layers, sources=sources,
-        geometry=geometry, k_point=mp.Vector3())
+        geometry=geometry, k_point=kpoint)
 
     ############################################
     ############################################
 
     #Add DFT fields
     vol = mp.Volume(size=mp.Vector3(lx_np, ly_np))
-    dft_obj = sim.add_dft_fields([src_comp], [fcen], where=vol)
-
-    vol2 = mp.Volume(center=mp.Vector3(x=thick/2), size=mp.Vector3(1, ly_np))
+    all_flds = [mp.Ex, mp.Ey, mp.Ez, mp.Hx, mp.Hy, mp.Hz]
+    dft_obj = sim.add_dft_fields(all_flds, [fcen], where=vol)
 
     #Run
     sim.run(until_after_sources=mp.stop_when_fields_decayed(50, src_comp, mp.Vector3(-0.5*cell_size.x+dpml), 1e-6))
@@ -91,8 +106,23 @@ for ang in angs:
     #         f.create_dataset('y', data=y)
     #         f.create_dataset('rot_angle', data=rot_angle)
 
-    plt.figure()
-    plt.imshow(abs(fld))
+    ff = ['Ex', 'Ey', 'Ez', 'Hx', 'Hy', 'Hz']
+
+    for f in ff:
+        fld = sim.get_dft_array(dft_obj, getattr(mp, f), 0)
+        if fld.size < 2:
+            continue
+        print(f, abs(fld).max())
+        # plt.figure()
+        # plt.imshow(abs(fld))
+        # plt.title(f)
+        #
+
+    # plt.figure()
+    # plt.imshow(np.abs(fld))
+    #
+    # plt.figure()
+    # plt.imshow(np.angle(fld))
     breakpoint()
     # # fig, axes = plt.subplots(1,2)
     # # axes[0].imshow(np.abs(fld).T, origin='lower')

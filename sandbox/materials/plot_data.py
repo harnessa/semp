@@ -37,9 +37,10 @@ perm1 = np.array([med1.epsilon(1/w)[0,0] for w in wavem])
 
 #defined material
 ceps = 14.979309348016363+0.1177371364850722j
-Dcon = 2*np.pi/w0 * ceps.imag / ceps.real
-# med2 = mp.Medium(epsilon=ceps.real, D_conductivity=Dcon)
-# perm2 = np.array([med2.epsilon(1/w)[0,0] for w in wavem])
+Dcon = 2*np.pi/0.641 * ceps.imag / ceps.real
+
+med2 = mp.Medium(epsilon=ceps.real, D_conductivity=Dcon)
+perm2 = np.array([med2.epsilon(1/w)[0,0] for w in wavem])
 
 um_scale = 1.0
 # conversion factor for eV to 1/um [=1/hc]
@@ -63,10 +64,10 @@ cSi_susc += [mp.LorentzianSusceptibility(frequency=cSi_frq3, gamma=cSi_gam3, sig
 
 
 med2 = mp.Medium(epsilon=1.0, E_susceptibilities=cSi_susc, valid_freq_range=cSi_range, \
-    D_conductivity=Dcon)
+    D_conductivity=Dcon/2/np.pi/2/np.pi)
 # perm2 = np.array([med2.epsilon(1/w)[0,0] for w in wavem])
-perm2 = np.array([mp.Medium(epsilon=ceps.real, \
-    D_conductivity=2*np.pi/w * ceps.imag / ceps.real).epsilon(1/w)[0,0] for w in wavem])
+# perm2 = np.array([mp.Medium(epsilon=ceps.real, \
+    # D_conductivity=2*np.pi/w * ceps.imag / ceps.real).epsilon(1/w)[0,0] for w in wavem])
 
 nn = 3.859
 kk = 0.015
@@ -78,14 +79,14 @@ fig, axes = plt.subplots(2, figsize=(6,9), sharex=True)
 axes[0].plot(wave1, pexp1.real, '-',  label=ext1)
 axes[0].plot(wave2, pexp2.real, '--', label=ext2)
 axes[0].plot(wavem, perm1.real, '-.', label='Meep 1')
-# axes[0].plot(wavem, perm2.real, ':',  label='Meep 2')
+axes[0].plot(wavem, perm2.real, ':',  label='Meep 2')
 axes[0].axhline(ceps2.real)
 axes[0].axvline(0.641)
 axes[0].set_ylabel(r'Re($\varepsilon)$')
 axes[1].plot(wave1, pexp1.imag, '-')
 axes[1].plot(wave2, pexp2.imag, '--')
 axes[1].plot(wavem, perm1.imag, '-.')
-# axes[1].plot(wavem, perm2.imag, ':')
+axes[1].plot(wavem, perm2.imag, ':')
 axes[1].axhline(ceps2.imag)
 axes[1].axvline(0.641)
 axes[1].set_ylabel(r'Im($\varepsilon)$')
