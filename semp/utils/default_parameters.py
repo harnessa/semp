@@ -49,6 +49,7 @@ def_params_MEEP = {
     'skin_thick':       0.,         # Skin thickness [um]
     'oxide_thick':      0.,         # Oxidation thickness [um]
     'wall_thick':       0.,         # Sidewall thickness [um]
+    'wafer_pullback':   0.,         # 
     'gap_width':        5.,         # Width of gap (also w/ edge) [um]
     'seam_dark':        5.,         # Width of seam on dark side (wafer) [um]
     'seam_lite':        5.,         # Width of seam on light side (vacuum) [um]

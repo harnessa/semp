@@ -211,9 +211,10 @@ class Geometry_2D(object):
         #Wafer
         ex = self.wafer_thick/2.
         dy = self.wafer_thick * np.tan(np.radians(self.taper_angle))
+        pb = self.wafer_pullback
         #lower (in image) left, upper left, upper right, lower right
-        waf_verts = [mp.Vector3( ex, -y0), mp.Vector3(-ex, -y0), \
-                     mp.Vector3(-ex, -y1), mp.Vector3( ex, -y1 - dy)]
+        waf_verts = [mp.Vector3( ex, -y0-pb), mp.Vector3(-ex, -y0-pb), \
+                     mp.Vector3(-ex, -y1-pb), mp.Vector3( ex, -y1-dy-pb)]
         wafer = mp.Prism(waf_verts, float(zdepth), material=waf_mat)
         geometry += [wafer]
 
@@ -252,8 +253,8 @@ class Geometry_2D(object):
 
         #Sidewalls
         if self.wall_thick > 0:
-            v1 = mp.Vector3(-ex, -y1)
-            v0 = mp.Vector3( ex, -y1 - dy)
+            v1 = mp.Vector3(-ex, -y1-pb)
+            v0 = mp.Vector3( ex, -y1-dy-pb)
             dv = mp.Vector3(y=self.wall_thick)
             wal_verts = [v0, v1, v1 - dv, v0 - dv]
             geometry += [mp.Prism(wal_verts, zdepth, material=skn_mat)]
@@ -265,7 +266,7 @@ class Geometry_2D(object):
                 #Get current size and center
                 cur_cen, cur_sze = scallop
                 scl_sze = mp.Vector3(cur_sze[1], cur_sze[0], zdepth)
-                scl_cen = mp.Vector3(-self.wafer_thick/2. + cur_cen[1], -y1+cur_cen[0])
+                scl_cen = mp.Vector3(-self.wafer_thick/2. + cur_cen[1], -y1+cur_cen[0]-pb)
                 #Add side walls
                 if self.wall_thick > 0:
                     #Side wall ellipsoid
@@ -315,7 +316,7 @@ class Geometry_2D(object):
                 ys0 = -y1 - (xs0 + self.wafer_thick/2) * \
                     np.tan(np.radians(self.taper_angle))
                 #Add ellipsoids
-                scl_cen = mp.Vector3(x=xs0, y=ys0)
+                scl_cen = mp.Vector3(x=xs0, y=ys0-pb)
                 geometry += [mp.Ellipsoid(material=mp.air, size=scl_sze, center=scl_cen)]
                 #Step down to next cylinder's position
                 xs0 += self.scallop_height
